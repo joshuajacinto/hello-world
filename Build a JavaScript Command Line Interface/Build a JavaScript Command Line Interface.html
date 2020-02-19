@@ -1,0 +1,691 @@
+
+<!--Preface-->
+
+
+<div class="frontmatters">
+<div class="page-frontmatter preface front set-front-matter">
+<div class="title-name">
+<h2 id="maintitle">Build a JavaScript Command Line Interface (CLI) with Node.js</h2>
+</div>
+
+
+<p>Copyright &copy; 2020 SitePoint Pty. Ltd.</p>
+<ul>
+<li><strong>Authors:</strong> Lukas White and James Hibbard</li>
+<li><strong>Cover Design:</strong> Alex Walker</li>
+</ul>
+<h2>Notice of Rights</h2>
+<p>All rights reserved. No part of this book may be reproduced, stored in a retrieval system or transmitted in any form or by any means, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical articles or reviews.</p>
+<h2>Notice of Liability</h2>
+<p>The author and publisher have made every effort to ensure the accuracy of the information herein. However, the information contained in this book is sold without warranty, either express or implied. Neither the authors and SitePoint Pty. Ltd., nor its dealers or distributors will be held liable for any damages to be caused either directly or indirectly by the instructions contained in this book, or by the software or hardware products described herein.</p>
+<h2>Trademark Notice</h2>
+<p>Rather than indicating every occurrence of a trademarked name as such, this book uses the names only in an editorial fashion and to the benefit of the trademark owner with no intention of infringement of the trademark.</p>
+
+<img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/build-a-javascript-command-line-interface-cli-with-node-js/images/sitepoint-gray.svg" alt="SitePoint logo" width="160" class="lazyload" />
+<p><br />Published by SitePoint Pty. Ltd.</p>
+<p>48 Cambridge Street Collingwood <br />VIC Australia 3066 <br />Web: www.sitepoint.com <br />Email: books@sitepoint.com</p>
+
+<!-- <h2 id="about-author">About the Author</h2>
+
+    <p>AUTHOR BIO</p> -->
+<h2>About SitePoint</h2>
+<p>SitePoint specializes in publishing fun, practical, and easy-to-understand content for web professionals. Visit <a href="https://www.sitepoint.com/">sitepoint.com</a> to access our blogs, books, newsletters, articles, and community forums. You&rsquo;ll find a stack of information on JavaScript, PHP, Ruby, mobile development, design, and more.</p>
+
+</div>
+</div>
+
+<!--chapter 1--> <!-- <div class="ch-head">Chapter</div> -->
+
+
+<div class="chapter" data-chapter-number="1">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 1 </span></div>
+<h1 class="chaptertitle">Build a JavaScript Command Line Interface (CLI) with Node.js</h1>
+<h3 class="author">Lukas White and James Hibbard</h3>
+</div>
+
+
+<p>As great as Node.js is for &ldquo;traditional&rdquo; web applications, its potential uses are far broader. Microservices, REST APIs, tooling, working with the Internet of Things and even desktop applications: it&rsquo;s got your back.</p>
+<p>Another area where Node.js is really useful is for building command-line applications&mdash;and that&rsquo;s what we&rsquo;re going to be doing in this tutorial. We&rsquo;re going to start by looking at a number of third-party packages designed to help work with the command line, then build a real-world example from scratch.</p>
+<p>What we&rsquo;re going to build is a tool for initializing a Git repository. Sure, it&rsquo;ll run<code>git init</code>under the hood, but it&rsquo;ll do more than just that. It will also create a remote repository on GitHub right from the command line, allow the user to interactively create a<code>.gitignore</code>file, and finally perform an initial commit and push.</p>
+<p>The code accompanying this tutorial can be found in <a href="https://github.com/sitepoint-editors/ginit">this GitHub repo</a>.</p>
+<h2>Why Build a Command-line Tool with Node.js?</h2>
+<p>Before we dive in and start building, it&rsquo;s worth looking at why we might choose Node.js to build a command-line application.</p>
+<p>The most obvious advantage is that, if you&rsquo;re reading this, you&rsquo;re probably already familiar with it&mdash;and, indeed, with JavaScript.</p>
+<p>Another key advantage, as we&rsquo;ll see as we go along, is that the strong Node.js ecosystem means that among the hundreds of thousands of packages available for all manner of purposes, there are a number which are specifically designed to help build powerful command-line tools.</p>
+<p>Finally, we can use<code class="lang-python">npm</code>to manage any dependencies, rather than have to worry about OS-specific package managers such as Aptitude, Yum or Homebrew.</p>
+
+<h4>Command-line Tool Dependencies</h4>
+
+<p>That isn&rsquo;t necessarily true, in that your command-line tool may have other external dependencies.</p>
+
+
+<h2>What We&rsquo;re Going to Build: ginit</h2>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/build-a-javascript-command-line-interface-cli-with-node-js/images/ginit-in-action.png" alt="Ginit, our Node CLI in action" class="lazyload" /></p>
+<p>For this tutorial, we&rsquo;re going to create a command-line utility which I&rsquo;m calling <strong>ginit</strong>. It&rsquo;s<code class="lang-python">git init</code>, but on steroids.</p>
+<p>You&rsquo;re probably wondering what on earth that means.</p>
+<p>As you no doubt already know,<code class="lang-python">git init</code>initializes a Git repository in the current folder. However, that&rsquo;s usually only one of a number of repetitive steps involved in the process of hooking up a new or existing project to Git. For example, as part of a typical workflow, you may well:</p>
+<ol>
+<li>Initialize the local repository by running
+<pre><code class="lang-python">git init</code></pre>
+</li>
+<li>Create a remote repository, for example on GitHub or Bitbucket&mdash;typically by leaving the command line and firing up a web browser</li>
+<li>Add the remote</li>
+<li>Create a <code>.gitignore</code>file</li>
+<li>Add your project files</li>
+<li>Commit the initial set of files</li>
+<li>Push up to the remote repository</li>
+</ol>
+<p>There are often more steps involved, but we&rsquo;ll stick to those for the purposes of our app. Nevertheless, these steps are pretty repetitive. Wouldn&rsquo;t it be better if we could do all this from the command line, with no copy-pasting of Git URLs and such like?</p>
+<p>So what ginit will do is create a Git repository in the current folder, create a remote repository&mdash;we&rsquo;ll be using GitHub for this&mdash;and then add it as a remote. Then it will provide a simple interactive &ldquo;wizard&rdquo; for creating a<code>.gitignore</code>file, add the contents of the folder and push it up to the remote repository. It might not save you hours, but it&rsquo;ll remove some of the initial friction when starting a new project.</p>
+<p>With that in mind, let&rsquo;s get started.</p>
+<h2>The Application Dependencies</h2>
+<p>One thing is for certain: in terms of appearance, the console will never have the sophistication of a graphical user interface. Nevertheless, that doesn&rsquo;t mean it has to be plain, ugly, monochrome text. You might be surprised by just how much you can do visually, while at the same time keeping it functional. We&rsquo;ll be looking at a couple of libraries for enhancing the display: <a href="https://www.npmjs.com/package/chalk">chalk</a> for colorizing the output and <a href="https://www.npmjs.com/package/clui">clui</a> to add some additional visual components. Just for fun, we&rsquo;ll use <a href="https://www.npmjs.com/package/figlet">figlet</a> to create a fancy ASCII-based banner, and we&rsquo;ll also use <a href="https://www.npmjs.com/package/clear">clear</a> to clear the console.</p>
+<p>In terms of input and output, the low-level <a href="https://nodejs.org/api/readline.html">Readline</a> Node.js module could be used to prompt the user and request input, and in simple cases is more than adequate. But we&rsquo;re going to take advantage of a third-party package which adds a greater degree of sophistication&mdash;<a href="https://www.npmjs.com/package/inquirer">Inquirer</a>. As well as providing a mechanism for asking questions, it also implements simple input controls: think radio buttons and checkboxes, but in the console.</p>
+<p>We&rsquo;ll also be using <a href="https://www.npmjs.com/package/minimist">minimist</a> to parse command-line arguments.</p>
+<p>Here&rsquo;s a complete list of the packages we&rsquo;ll use specifically for developing on the command line:</p>
+<ul>
+<li><a href="https://www.npmjs.com/package/chalk">chalk</a>: colorizes the output</li>
+<li><a href="https://www.npmjs.com/package/clear">clear</a>: clears the terminal screen</li>
+<li><a href="https://www.npmjs.com/package/clui">clui</a>: draws command-line tables, gauges and spinners</li>
+<li><a href="https://www.npmjs.com/package/figlet">figlet</a>: creates ASCII art from text</li>
+<li><a href="https://www.npmjs.com/package/inquirer">inquirer</a>: creates interactive command-line user interface</li>
+<li><a href="https://www.npmjs.com/package/minimist">minimist</a>: parses argument options</li>
+<li><a href="https://www.npmjs.com/package/configstore">configstore</a>: easily loads and saves config without you having to think about where and how</li>
+</ul>
+<p>Additionally, we&rsquo;ll also be using the following:</p>
+<ul>
+<li><a href="https://www.npmjs.com/package/@octokit/rest">@octokit/rest</a>: a GitHub REST API client for Node.js</li>
+<li><a href="https://www.npmjs.com/package/@octokit/auth-basic">@octokit/auth-basic</a>: an implementation of one of <a href="https://github.com/octokit/auth.js">GitHub&rsquo;s authentication strategies</a></li>
+<li><a href="https://www.npmjs.com/package/lodash">lodash</a>: a JavaScript utility library</li>
+<li><a href="https://www.npmjs.com/package/simple-git">simple-git</a>: a tool for running Git commands in a Node.js application</li>
+<li><a href="https://www.npmjs.com/package/touch">touch</a>: a tool for implementing the Unix touch command</li>
+</ul>
+<h2>Getting Started</h2>
+<p>Although we&rsquo;re going to create the application from scratch, don&rsquo;t forget that you can also grab a copy of the code from the <a href="https://github.com/sitepoint-editors/ginit">repository which accompanies this article</a>.</p>
+<p>Create a new directory for the project. You don&rsquo;t have to call it<code>ginit</code>, of course:</p>
+<pre><code class="lang-python">mkdir ginit
+cd ginit
+</code></pre>
+<p>Create a new<code>package.json</code>file:</p>
+<pre><code class="lang-python">npm init -y
+</code></pre>
+<p>And edit it to look like so:</p>
+<pre><code class="lang-python">{
+  "name": "ginit",
+  "version": "1.0.0",
+  "description": "'git init' on steroids",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" &amp;&amp; exit 1"
+  },
+  "keywords": [
+    "Git",
+    "CLI"
+  ],
+  "author": "&lt;YOUR NAME&gt;",
+  "license": "ISC"
+}
+</code></pre>
+<p>Now install the dependencies:</p>
+<pre><code class="lang-python">npm install chalk clear clui figlet inquirer minimist configstore @octokit/rest @octokit/auth-basic lodash simple-git touch
+</code></pre>
+<p>Now create an<code class=>index.js</code>file in the same folder and<code>require</code>the following dependencies:</p>
+<pre><code class="lang-python">const chalk = require('chalk');
+const clear = require('clear');
+const figlet = require('figlet');
+</code></pre>
+<h2>Adding Some Helper Methods</h2>
+<p>We&rsquo;re going to create a<code>lib</code>folder where we&rsquo;ll split our helper code into modules:</p>
+<ul>
+<li><strong>files.js</strong>: basic file management</li>
+<li><strong>inquirer.js</strong>: command-line user interaction</li>
+<li><strong>github.js</strong>: access token management</li>
+<li><strong>repo.js</strong>: Git repository management</li>
+</ul>
+<p>Let&rsquo;s start with<code>lib/files.js</code>. Here, we need to:</p>
+<ul>
+<li>get the current directory (to get a default repo name)</li>
+<li>check whether a directory exists (to determine whether the current folder is already a Git repository by looking for a folder named<code>.git</code>)</li>
+</ul>
+<p>This sounds straightforward, but there are a couple of gotchas to take into consideration.</p>
+<p>Firstly, you might be tempted to use the<code>fs</code>module&rsquo;s <a href="https://nodejs.org/api/fs.html#fs_fs_realpathsync_path_options">realpathSync</a> method to get the current directory:</p>
+<pre><code class="lang-python">path.basename(path.dirname(fs.realpathSync(__filename)));
+</code></pre>
+<p>This will work when we&rsquo;re calling the application from the same directory (for example, using<code>node index.js</code>), but bear in mind that we&rsquo;re going to be making our console application available globally. This means we&rsquo;ll want the name of the directory we&rsquo;re working in, not the directory where the application resides. For this purpose, it&rsquo;s better to use <a href="https://nodejs.org/api/process.html#process_process_cwd">process.cwd</a>:</p>
+<pre><code class="lang-python">path.basename(process.cwd());
+</code></pre>
+<p>Secondly, the preferred method of checking whether a file or directory exists <a href="http://stackoverflow.com/a/4482701">keeps changing</a>. The current way is to use<code>existsSync</code>. This returns</p>
+<pre><code class="lang-python">true</code></pre>
+<p>if the path exists,</p>
+<pre><code class="lang-python">false</code></pre>otherwise.
+<p>Finally, it&rsquo;s worth noting that when you&rsquo;re writing a command-line application, using the synchronous version of these sorts of methods is just fine.</p>
+<p>Putting that all together, let&rsquo;s create a utility package in<code>lib/files.js</code>:</p>
+<pre><code class="lang-python">const fs = require('fs');
+const path = require('path');
+
+module.exports = {
+  getCurrentDirectoryBase: () =&gt; {
+    return path.basename(process.cwd());
+  },
+
+  directoryExists: (filePath) =&gt; {
+    return fs.existsSync(filePath);
+  }
+};
+</code></pre>
+<p>Go back to<code class="lang-python">index.js</code>and ensure you<code>require</code>the new file:</p>
+<pre><code class="lang-python">const files = require('./lib/files');
+</code></pre>
+<p>With this in place, we can start developing the application.</p>
+<h2>Initializing the Node CLI</h2>
+<p>Now let&rsquo;s implement the start-up phase of our console application.</p>
+<p>In order to demonstrate some of the packages we&rsquo;ve installed to enhance the console output, let&rsquo;s clear the screen and then display a banner:</p>
+<pre><code class="lang-python">// index.js
+
+clear();
+
+console.log(
+  chalk.yellow(
+    figlet.textSync('Ginit', { horizontalLayout: 'full' })
+  )
+);
+</code></pre>
+<p>You can run the application using<code>node index.js</code>. The output from this is shown below.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/build-a-javascript-command-line-interface-cli-with-node-js/images/ginit-logo.png" alt="The welcome banner on our Node CLI, created using Chalk and Figlet" class="lazyload" /></p>
+<p>Next up, let&rsquo;s run a simple check to ensure that the current folder isn&rsquo;t already a Git repository. That&rsquo;s easy: we just check for the existence of a<code class="lang-python">.git</code>folder using the utility method we just created:</p>
+<pre><code class="lang-python">//index.js
+
+if (files.directoryExists('.git')) {
+  console.log(chalk.red('Already a Git repository!'));
+  process.exit();
+}
+</code></pre>
+
+<h4>Chalk Module</h4>
+
+<p>Notice we&rsquo;re using the <a href="https://www.npmjs.com/package/chalk">chalk module</a> to show a red-colored message.</p>
+
+
+<h2>Prompting the User for Input</h2>
+<p>The next thing we need to do is create a function that will prompt the user for their GitHub credentials.</p>
+<p>We can use <a href="https://www.npmjs.com/package/inquirer">Inquirer</a> for this. The module includes a number of methods for various types of prompts, which are roughly analogous to HTML form controls. In order to collect the user&rsquo;s GitHub username and password, we&rsquo;re going to use the<code>input</code>and<code>password</code>types respectively.</p>
+<p>First, create<code>lib/inquirer.js</code>and insert this code:</p>
+<pre><code class="lang-python">const inquirer = require('inquirer');
+
+module.exports = {
+  askGithubCredentials: () =&gt; {
+    const questions = [
+      {
+        name: 'username',
+        type: 'input',
+        message: 'Enter your GitHub username or e-mail address:',
+        validate: function( value ) {
+          if (value.length) {
+            return true;
+          } else {
+            return 'Please enter your username or e-mail address.';
+          }
+        }
+      },
+      {
+        name: 'password',
+        type: 'password',
+        message: 'Enter your password:',
+        validate: function(value) {
+          if (value.length) {
+            return true;
+          } else {
+            return 'Please enter your password.';
+          }
+        }
+      }
+    ];
+    return inquirer.prompt(questions);
+  },
+};
+</code></pre>
+<p>As you can see,<code>inquirer.prompt()</code>asks the user a series of questions, provided in the form of an array as the first argument. Each question is made up of an object which defines the<code>name</code>of the field, the<code>type</code>(we&rsquo;re just using<code>input</code>and<code>password</code>respectively here, but later we&rsquo;ll look at a more advanced example), and the prompt (<code>message</code>) to displaThe input the user provides will be passed in to the calling function as a<code>Promise</code>. If successful, we&rsquo;ll end up with a simple object with two properties&mdash;<code>username</code>and<code>password</code>You can test all of this out by adding the following to<code>index.js</code>:</p>
+<pre><code class="lang-python">const inquirer  = require('./lib/inquirer');
+
+const run = async () =&gt; {
+  const credentials = await inquirer.askGithubCredentials();
+  console.log(credentials);
+};
+
+run();
+</code></pre>
+<p>Then run the script using<code>node index.js</code>.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/build-a-javascript-command-line-interface-cli-with-node-js/images/prompting-the-user-for-input.png" alt="Getting user input with Inquirer" class="lazyload" /></p>
+
+<h4>After Testing</h4>
+
+<p>When you&rsquo;re done testing, don&rsquo;t forget to remove the line</p>
+<pre><code class="lang-python">const inquirer  = require('./lib/inquirer');</code></pre>
+<p>from<code class="lang-python">index.js</code>, as we won&rsquo;t actually need it in this file.</p>
+
+
+<h2>Dealing With GitHub Authentication</h2>
+<p>The next step is to create a function to retrieve an OAuth token for the GitHub API. Essentially, we&rsquo;re going to &ldquo;exchange&rdquo; the username and password for a token.</p>
+<p>Of course, we don&rsquo;t want users to have to enter their credentials every time they use the tool. Instead, we&rsquo;ll store the OAuth token for subsequent requests. This is where the <a href="https://www.npmjs.com/package/configstore">configstore</a> package comes in.</p>
+<h3>Storing Config</h3>
+<p>Storing config is outwardly quite straightforward: you can simply read and write to/from a JSON file without the need for a third-party package. However, the configstore package provides a few key advantages:</p>
+<ol>
+<li>It determines the most appropriate location for the file for you, taking into account your operating system and the current user.</li>
+<li>There&rsquo;s no need to explicitly read or write to the file. You simply modify a configstore object and that&rsquo;s taken care of for you in the background.</li>
+</ol>
+<p>To use it, simply create an instance, passing it an application identifier. For example:</p>
+<pre><code class="lang-python">const Configstore = require('configstore');
+const conf = new Configstore('ginit');
+</code></pre>
+<p>If the<code>configstore</code>file doesn&rsquo;t exist, it&rsquo;ll return an empty object and create the file in the background. If there&rsquo;s already a<code>configstore</code>file, the contents will be made available to your application. You can now use<code>conf</code>as a simple object, getting or setting properties as required. As mentioned above, you don&rsquo;t need to worry about saving it afterwards. That gets taken care of for you.</p>
+
+<h4>Finding the File</h4>
+
+<p>On macOS, you&rsquo;ll find the file in</p>
+<pre><code class="lang-python">/Users/[YOUR-USERNME]/.config/configstore/ginit.json</code></pre>
+<p>On Linux, it&rsquo;s in</p>
+<pre><code class="lang-python">/home/[YOUR-USERNME]/.config/configstore/ginit.json</code></pre>
+
+
+
+<h2>Communicating with the GitHub API</h2>
+<p>Let&rsquo;s create a library for handling the GitHub token. Create the file</p>
+<pre><code class="lang-python">lib/github.js</code></pre>
+<p>and place the following code inside it:</p>
+<pre><code class="lang-python">const CLI = require('clui');
+const Configstore = require('configstore');
+const Octokit = require('@octokit/rest');
+const Spinner = CLI.Spinner;
+const { createBasicAuth } = require("@octokit/auth-basic");
+
+const inquirer = require('./inquirer');
+const pkg = require('../package.json');
+
+const conf = new Configstore(pkg.name);
+</code></pre>
+<p>Now let&rsquo;s add the function that checks whether we&rsquo;ve already got an access token. We&rsquo;ll also add a function that allows other libs to access<code class="lang-python">octokit</code>(GitHub) functions:</p>
+<pre><code class="lang-python">let octokit;
+
+module.exports = {
+  getInstance: () =&gt; {
+    return octokit;
+  },
+
+  getStoredGithubToken: () =&gt; {
+    return conf.get('github.token');
+  },
+};
+</code></pre>
+<p>If a<code class="lang-python">conf</code>object exists and it has<code class="lang-python">github.token</code>property, this means that there&rsquo;s already a token in storage. In this case, we return the token value back to the invoking function. We&rsquo;ll get to that later on.</p>
+<p>If no token is detected, we need to fetch one. Of course, getting an OAuth token involves a network request, which means a short wait for the user. This gives us an opportunity to look at the <a href="https://www.npmjs.com/package/clui">clui</a> package which provides some enhancements for console-based applications, among them an animated spinner.</p>
+<p>Creating a spinner is easy:</p>
+<pre><code class="lang-python">const status = new Spinner('Authenticating you, please wait...');
+status.start();
+</code></pre>
+<p>Once you&rsquo;re done, simply stop it and it will disappear from the screen:</p>
+<pre><code class="lang-python">status.stop();
+</code></pre>
+
+<h4>Setting the Caption Dynamically</h4>
+
+<p>You can also set the caption dynamically using the<code class="lang-python">update</code>method. This could be useful if you have some indication of progress&mdash;for example, displaying the percentage complete.</p>
+
+
+<p>Here&rsquo;s the code to authenticate with GitHub:</p>
+<pre><code class="lang-python">module.exports = {
+  getInstance: () =&gt; { ... },
+  getStoredGithubToken: () =&gt; { ... },
+
+  getPersonalAccesToken: async () =&gt; {
+    const credentials = await inquirer.askGithubCredentials();
+    const status = new Spinner('Authenticating you, please wait...');
+
+    status.start();
+
+    const auth = createBasicAuth({
+      username: credentials.username,
+      password: credentials.password,
+      async on2Fa() {
+        // TBD
+      },
+      token: {
+        scopes: ['user', 'public_repo', 'repo', 'repo:status'],
+        note: 'ginit, the command-line tool for initalizing Git repos'
+      }
+    });
+
+    try {
+      const res = await auth();
+
+      if(res.token) {
+        conf.set('github.token', res.token);
+        return res.token;
+      } else {
+        throw new Error("GitHub token was not found in the response");
+      }
+    } finally {
+      status.stop();
+    }
+  },
+};
+</code></pre>
+<p>Let&rsquo;s step through this:</p>
+<ol>
+<li>We prompt the user for their credentials using the<code class="lang-python">askGithubCredentials</code>method we defined earlier.</li>
+<li>We use the <a href="https://www.npmjs.com/package/@octokit/auth-basic?activeTab=readme#createbasicauthtoken-options">createBasicAuth</a> method to create an<code class="lang-python">auth</code>function, which we&rsquo;ll call in the next step. We pass the user&rsquo;s username and password to this method, as well as a token object with two properties:<code class="lang-python">note</code>, a note to remind us what the OAuth token is for, and<code class="lang-python">scopes</code>, a list of scopes that this authorization is in. You can read <a href="https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes">more about available scopes</a> in GitHub&rsquo;s documentation.</li>
+<li>We then<code>await</code>the result of calling the<code>auth</code>function inside a<code>try</code>block.</li>
+<li>If authentication is successful and a token is present in the response, we set it in the<code>configstore</code>for next time and return the token.</li>
+<li>If the token is missing, or authentication doesn&rsquo;t succeed for whatever reason, the error will bubble on up the stack so that we can catch it in<code>index.js</code>. We&rsquo;ll implement this functionality later.</li>
+</ol>
+<p>Any access tokens you create, whether manually or via the API as we&rsquo;re doing here, you&rsquo;ll be able to <a href="https://github.com/settings/tokens">see them here</a>. During the course of development, you may find you need to delete ginit&rsquo;s access token&mdash;identifiable by the<code>note</code>parameter supplied above&mdash;so that you can re-generate it.</p>
+<p>If you&rsquo;ve been following along and would like to try out what we have so far, you can update<code class="lang-python">index.js</code>as follows:</p>
+<pre><code class="lang-python">const github = require('./lib/github');
+
+...
+
+const run = async () =&gt; {
+  let token = github.getStoredGithubToken();
+  if(!token) {
+    token = await github.getPersonalAccesToken();
+  }
+  console.log(token);
+};
+</code></pre>
+<p>The first time you run it, you should be prompted for your username and GitHub password. The app should then create a personal access token on GitHub and save the token to the<code>configstore</code>, before logging it to the console. Every time you run the app after that, the app will pull the token straight from the<code>configstore</code>and log that to the screen.</p>
+<h3>Dealing with Two-factor Authentication</h3>
+<p>Hopefully you noticed the<code>on2Fa</code>method in the code above. This will be called when a user has two-factor authentication enabled on their GitHub account. Let&rsquo;s fill that out now:</p>
+<pre><code class="lang-python">// inquirer.js
+
+const inquirer = require('inquirer');
+
+module.exports = {
+  askGithubCredentials: () =&gt; { ... },
+
+  getTwoFactorAuthenticationCode: () =&gt; {
+    return inquirer.prompt({
+      name: 'twoFactorAuthenticationCode',
+      type: 'input',
+      message: 'Enter your two-factor authentication code:',
+      validate: function(value) {
+        if (value.length) {
+          return true;
+        } else {
+          return 'Please enter your two-factor authentication code.';
+        }
+      }
+    });
+  },
+};
+</code></pre>
+<p>We can call the<code class="lang-python">getTwoFactorAuthenticationCode</code>method from within the<code class="lang-python">on2Fa</code>method, like so:</p>
+<pre><code class="lang-python">// github.js
+
+async on2Fa() {
+  status.stop();
+  const res = await inquirer.getTwoFactorAuthenticationCode();
+  status.start();
+  return res.twoFactorAuthenticationCode;
+},
+</code></pre>
+<p>And now our app can handle GitHub accounts with two-factor authentication enabled.</p>
+<h2>Creating a Repository</h2>
+<p>Once we&rsquo;ve got an OAuth token, we can use it to create a remote repository with GitHub.</p>
+<p>Again, we can use Inquirer to ask a series of questions. We need a name for the repo, we&rsquo;ll ask for an optional description, and we also need to know whether it should be public or private.</p>
+<p>We&rsquo;ll use <a href="https://www.npmjs.com/package/minimist">minimist</a> to grab defaults for the name and description from optional command-line arguments. For example:</p>
+<pre><code class="lang-python">ginit my-repo "just a test repository"
+</code></pre>
+<p>This will set the default name to<code class="lang-python">my-repo</code> and the description to<code class="lang-python">just a test repository</code> .</p>
+<p>The following line will place the arguments in an array indexed by an underscore:</p>
+<pre><code class="lang-python">const argv = require('minimist')(process.argv.slice(2));
+// { _: [ 'my-repo', 'just a test repository' ] }
+</code></pre>
+
+<h4>There&rsquo;s More to minimist</h4>
+
+<p>This only really scratches the surface of the minimist package. You can also use it to interpret flags, switches and name/value pairs. Check out the documentation for more information.</p>
+
+
+<p>We&rsquo;ll write code to parse the command-line arguments and ask a series of questions. First, update<code>lib/inquirer.js</code>as follows:</p>
+<pre><code class="lang-python">const inquirer = require('inquirer');
+const files = require('./files');
+
+module.exports = {
+  askGithubCredentials: () =&gt; { ... },
+  getTwoFactorAuthenticationCode: () =&gt; { ... },
+
+  askRepoDetails: () =&gt; {
+    const argv = require('minimist')(process.argv.slice(2));
+
+    const questions = [
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Enter a name for the repository:',
+        default: argv._[0] || files.getCurrentDirectoryBase(),
+        validate: function( value ) {
+          if (value.length) {
+            return true;
+          } else {
+            return 'Please enter a name for the repository.';
+          }
+        }
+      },
+      {
+        type: 'input',
+        name: 'description',
+        default: argv._[1] || null,
+        message: 'Optionally enter a description of the repository:'
+      },
+      {
+        type: 'list',
+        name: 'visibility',
+        message: 'Public or private:',
+        choices: [ 'public', 'private' ],
+        default: 'public'
+      }
+    ];
+    return inquirer.prompt(questions);
+  },
+};
+</code></pre>
+<p>Next, create the file<code>lib/repo.js</code>and add this code:</p>
+<pre><code class="lang-python">const CLI = require('clui');
+const fs = require('fs');
+const git = require('simple-git/promise')();
+const Spinner = CLI.Spinner;
+const touch = require("touch");
+const _ = require('lodash');
+
+const inquirer = require('./inquirer');
+const gh = require('./github');
+
+module.exports = {
+  createRemoteRepo: async () =&gt; {
+    const github = gh.getInstance();
+    const answers = await inquirer.askRepoDetails();
+
+    const data = {
+      name: answers.name,
+      description: answers.description,
+      private: (answers.visibility === 'private')
+    };
+
+    const status = new Spinner('Creating remote repository...');
+    status.start();
+
+    try {
+      const response = await github.repos.createForAuthenticatedUser(data);
+      return response.data.ssh_url;
+    } finally {
+      status.stop();
+    }
+  },
+};
+</code></pre>
+<p>Once we have that information, we can simply use the GitHub package to <a href="https://octokit.github.io/rest.js/#octokit-routes-repos-create-for-authenticated-user">create a repo</a>, which will give us a URL for the newly created repository. We can then set that up as a remote in our local Git repository. First, however, let&rsquo;s interactively create a<code>.gitignore</code>file.</p>
+<h2>Creating a .gitignore File</h2>
+<p>For the next step, we&rsquo;ll create a simple command-line &ldquo;wizard&rdquo; to generate a<code>.gitignore</code>file. If the user is running our application in an existing project directory, let&rsquo;s show them a list of files and directories already in the current working directory, and allow them to select which ones to ignore.</p>
+<p>The Inquirer package provides a<code class="lang-python">checkbox</code>input type for just that.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/build-a-javascript-command-line-interface-cli-with-node-js/images/inquirers-checkboxes.png" alt="Inquirer&rsquo;s checkboxes in action" class="lazyload" /></p>
+<p>The first thing we need to do is scan the current directory, ignoring the<code>.git</code>folder and any existing<code>.gitignore</code>file (we do this by making use of lodash&rsquo;s <a href="https://lodash.com/docs#without">without</a> method):</p>
+<pre><code class="lang-python">const filelist = _.without(fs.readdirSync('.'), '.git', '.gitignore');
+</code></pre>
+<p>If there&rsquo;s nothing to add, there&rsquo;s no point in continuing, so let&rsquo;s simply<code>touch</code>the current<code>.gitignore</code>file and bail out of the function:</p>
+<pre><code class="lang-python">if (filelist.length) {
+  ...
+} else {
+  touch('.gitignore');
+}
+</code></pre>
+<p>Finally, let&rsquo;s utilize Inquirer&rsquo;s checkbox &ldquo;widget&rdquo; to list the files. Insert the following code in<code class="lang-python">lib/inquirer.js</code>:</p>
+<pre><code class="lang-python">askIgnoreFiles: (filelist) =&gt; {
+  const questions = [
+    {
+      type: 'checkbox',
+      name: 'ignore',
+      message: 'Select the files and/or folders you wish to ignore:',
+      choices: filelist,
+      default: ['node_modules', 'bower_components']
+    }
+  ];
+  return inquirer.prompt(questions);
+},
+</code></pre>
+<p>Notice that we can also provide a list of defaults. In this case, we&rsquo;re pre-selecting<code>node_modules</code>and<code>bower_components</code>, should they exist.</p>
+<p>With the Inquirer code in place, we can now construct the<code>createGitignore()</code>function. Insert this code in<code>lib/repo.js</code>:</p>
+<pre><code class="lang-python">createGitignore: async () =&gt; {
+  const filelist = _.without(fs.readdirSync('.'), '.git', '.gitignore');
+
+  if (filelist.length) {
+    const answers = await inquirer.askIgnoreFiles(filelist);
+
+    if (answers.ignore.length) {
+      fs.writeFileSync( '.gitignore', answers.ignore.join( '\n' ) );
+    } else {
+      touch( '.gitignore' );
+    }
+  } else {
+    touch('.gitignore');
+  }
+},
+</code></pre>
+<p>Once &ldquo;submitted&rdquo;, we then generate a<code>.gitignore</code>by joining up the selected list of files, separated with a newline. Our function now pretty much guarantees we&rsquo;ve got a<code>.gitignore</code>file, so we can proceed with initializing a Git repository.</p>
+<h2>Interacting with Git from within the App</h2>
+<p>There are a number of ways to interact with Git, but perhaps the simplest is to use the <a href="https://www.npmjs.com/package/simple-git">simple-git</a> package. This provides a set of chainable methods which, behind the scenes, run the Git executable.</p>
+<p>These are the repetitive tasks we&rsquo;ll use it to automate:</p>
+<ol>
+<li>run<code class="lang-python">git init</code>
+</li>
+<li>add the<code class="lang-python">.gitignore</code>file</li>
+<li>add the remaining contents of the working directory</li>
+<li>perform an initial commit</li>
+<li>add the newly created remote repository</li>
+<li>push the working directory up to the remote</li>
+</ol>
+<p>Insert the following code in<code class="lang-python">lib/repo.js</code>:</p>
+<pre><code class="lang-python">setupRepo: async (url) =&gt; {
+  const status = new Spinner('Initializing local repository and pushing to remote...');
+  status.start();
+
+  try {
+    git.init()
+      .then(git.add('.gitignore'))
+      .then(git.add('./*'))
+      .then(git.commit('Initial commit'))
+      .then(git.addRemote('origin', url))
+      .then(git.push('origin', 'master'));
+  } finally {
+    status.stop();
+  }
+},
+</code></pre>
+<h2>Putting It All Together</h2>
+<p>First, let&rsquo;s set a helper function in<code>lib/github.js</code>for setting up an<code>oauth</code> authentication:</p>
+<pre><code class="lang-python">githubAuth: (token) =&gt; {
+  octokit = new Octokit({
+    auth: token
+  });
+},
+</code></pre>
+<p>Next, we create a function in<code>index.js</code>for handling the logic of acquiring the token. Place this code before the<code>run()</code>function:</p>
+<pre><code class="lang-python">const getGithubToken = async () =&gt; {
+  // Fetch token from config store
+  let token = github.getStoredGithubToken();
+  if(token) {
+    return token;
+  }
+
+  // No token found, use credentials to access GitHub account
+  token = await github.getPersonalAccesToken();
+
+  return token;
+};
+</code></pre>
+<p>Finally, we update the<code class="lang-python">run()</code>function by writing code that will handle the main logic of the app:</p>
+<pre><code class="lang-python">const repo = require('./lib/repo');
+
+...
+
+const run = async () =&gt; {
+  try {
+    // Retrieve &amp; Set Authentication Token
+    const token = await getGithubToken();
+    github.githubAuth(token);
+
+    // Create remote repository
+    const url = await repo.createRemoteRepo();
+
+    // Create .gitignore file
+    await repo.createGitignore();
+
+    // Set up local repository and push to remote
+    await repo.setupRepo(url);
+
+    console.log(chalk.green('All done!'));
+  } catch(err) {
+      if (err) {
+        switch (err.status) {
+          case 401:
+            console.log(chalk.red('Couldn\'t log you in. Please provide correct credentials/token.'));
+            break;
+          case 422:
+            console.log(chalk.red('There is already a remote repository or token with the same name'));
+            break;
+          default:
+            console.log(chalk.red(err));
+        }
+      }
+  }
+};
+</code></pre>
+<p>As you can see, we ensure the user is authenticated before calling all of our other functions (<code>createRemoteRepo()</code>,<code>createGitignore()</code>,<code>setupRepo()</code>) sequentially. The code also handles any errors and offers the user appropriate feedback.</p>
+<p>You can check out the completed <a href="https://github.com/sitepoint-editors/ginit/blob/master/index.js">index.js</a> file on our GitHub repo.</p>
+<p>At this point you should have a working app. Give it a try and satisfy yourself that it works as expected.</p>
+<h2>Making the ginit Command Available Globally</h2>
+<p>The one remaining thing to do is to make our command available globally. To do this, we&rsquo;ll need to add a <a href="https://en.wikipedia.org/wiki/Shebang_%28Unix%29">shebang</a> line to the top of<code>index.js</code>:</p>
+<pre><code class="lang-python">#!/usr/bin/env node</code></pre>
+<p>Next, we need to add a<code>bin</code>property to our<code>package.json</code>file. This maps the command name (<code>ginit</code>) to the name of the file to be executed (relative to<code>package.json</code>):</p>
+<pre><code class="lang-python">"bin": {
+  "ginit": "./index.js"
+}
+</code></pre>
+<p>After that, install the module globally and you&rsquo;ll have a working shell command:</p>
+<pre><code class="lang-python">npm install -g
+</code></pre>
+
+<h4>Works on Windows</h4>
+
+<p>This will also work on Windows, as <a href="http://stackoverflow.com/a/10398567/1136887">npm will helpfully install a cmd wrapper alongside your script</a>.</p>
+
+
+<p>If you want to confirm the install worked, you can list your globally installed Node modules using this:</p>
+<pre><code class="lang-python">npm ls -g --depth=0
+</code></pre>
+<h2>Taking it Further</h2>
+<p>We&rsquo;ve got a fairly nifty, albeit simple command-line app for initializing Git repositories. But there&rsquo;s plenty more you could do to enhance it further.</p>
+<p>If you&rsquo;re a Bitbucket user, you could adapt the program to use the Bitbucket API to create a repository. There&rsquo;s a <a href="https://www.npmjs.com/package/bitbucket-api">Node.js API wrapper available</a> to help you get started. You may wish to add an additional command-line option or prompt to ask the user whether they want to use GitHub or Bitbucket (Inquirer would be perfect for just that) or merely replace the GitHub-specific code with a Bitbucket alternative.</p>
+<p>You could also provide the facility to specify your own set of defaults for the<code class="lang-python">.gitgnore</code>file, instead of a hardcoded list. The preferences package might be suitable here, or you could provide a set of &ldquo;templates&rdquo;&mdash;perhaps prompting the user for the type of project. You might also want to look at integrating it with the <a href="https://www.gitignore.io/">.gitignore.io</a> command-line tool/API.</p>
+<p>Beyond all that, you may also want to add additional validation, provide the ability to skip certain sections, and more.</p>
+
+</div>

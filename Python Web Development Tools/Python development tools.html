@@ -1,0 +1,559 @@
+
+  <div class="frontmatters">
+  <div class="page-frontmatter preface front set-front-matter">
+  <div class="title-name">
+  <h2 id="maintitle"> Python Web Development: Tools </h2>
+  </div>
+ 
+    <p>Copyright © 2020 SitePoint Pty. Ltd.</p>
+
+    <ul>
+      <li>
+        <strong>Authors:</strong> Michael Wanyoike, Shaumik Daityari, Tonino Jankov</li>
+      <li>
+        <strong>Cover Design:</strong> Alex Walker</li>
+    </ul>
+
+    <h2 id="notice-of-rights">Notice of Rights</h2>
+
+    <p>All rights reserved. No part of this book may be reproduced, stored in a retrieval system or transmitted in any form or by any means, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical articles or reviews.</p>
+
+    <h2 id="notice-of-liability">Notice of Liability</h2>
+
+    <p>The author and publisher have made every effort to ensure the accuracy of the information herein. However, the information contained in this book is sold without warranty, either express or implied. Neither the authors and SitePoint Pty. Ltd., nor its dealers or distributors will be held liable for any damages to be caused either directly or indirectly by the instructions contained in this book, or by the software or hardware products described herein.</p>
+
+    <h2 id="trademark-notice">Trademark Notice</h2>
+
+    <p>Rather than indicating every occurrence of a trademarked name as such, this book uses the names only in an editorial fashion and to the benefit of the trademark owner with no intention of infringement of the trademark.</p>
+
+      <p>
+        <img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/sitepoint-gray.svg" alt="SitePoint logo" width="160" />
+        <br/> Published by SitePoint Pty. Ltd.</p>
+      <p>48 Cambridge Street Collingwood
+        <br/> VIC Australia 3066
+        <br/> Web: www.sitepoint.com
+        <br/> Email: books@sitepoint.com</p>
+
+
+    <h2 id="about-sitepoint">About SitePoint</h2>
+
+    <p>SitePoint specializes in publishing fun, practical, and easy-to-understand content for web professionals. Visit <a class="uri" href="https://www.sitepoint.com/">sitepoint.com</a> to access our blogs, books, newsletters, articles, and community forums. You’ll find a stack of information on JavaScript, PHP, Ruby, mobile development, design, and more.</p>
+
+    <h1 id="preface">Preface</h1>
+    <p>This book is a collection of tutorials covering some popular tools for Python web development. It contains:</p>
+
+ <ul>
+     <li><em>Setting Up Free CI for Python Web Apps on GitHub, GitLab and Bitbucket</em> by Michael Wanyoike</li>
+     <li><em>Visual Studio Extensions for Python Web Development</em> by Michael Wanyoike</li>
+     <li><em>Containerizing Python Web Apps with Docker/LXD</em> by Tonino Jankov</li>
+     <li><em>Where Should You Deploy Python Apps?</em> by Shaumik Daityari</li>
+
+ </ul>
+    <h2 id="who-should-read-this-book-">Who Should Read This Book?</h2>
+    <p>This book is for developers with some existing experience with Python. If you are unfamiliar with the basics of Python, check out <a href="https://www.sitepoint.com/premium/books/the-python-apprentice">The Python Apprentice</a> to get your bearings first.</p>
+    </div>
+  </div>
+
+
+<!-- chapter 1 -->
+
+<div class="chapter" data-chapter-number="1">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 1 </span></div>
+<h1 class="chaptertitle">Setting Up Free CI for Python Web Apps on GitHub, GitLab and Bitbucket</h1>
+<h3 class="author">Michael Wanyoike</h3>
+</div>
+
+<p>In the past, if you wanted to set up a continuous integration (CI) and deployment pipeline for your team, you had to download and configure Jenkins on your local server. Nowadays, you can simply hop onto cloud-hosted CI/CD providers such as <a href="https://buddy.works/">Buddy</a>, <a href="https://circleci.com/">CircleCI</a> and <a href="https://travis-ci.org/">Travis CI</a>.</p>
+<p>In this guide, we’ll look at repository hosting providers such as GitHub, GitLab and Bitbucket that provide integrated CI/CD services for free. Using these means we no longer need to manage a separate platform to build and run CI/CD pipelines. We’ll be using a Flask project to learn how to configure a simple “build and test” pipeline on each platform.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>If you’re new to the world of continuous integration and continuous deployment, you should be aware that Docker has become the foundation of modern CI/CD platforms. Docker is essential in creating clean environments suitable for running scripts used in building, testing and deploying code. Docker containers consume far less resources and spin up faster than virtual machines. If you’re new to this, please check out our <a href="https://www.sitepoint.com/tag/docker/">articles on Docker</a>.</p>
+<h2 id="github-actions-ci-cd">GitHub Actions: CI/CD</h2>
+<p>In 2018, GitHub released a new feature called <a href="https://github.com/features/actions">GitHub Actions</a> that allowed developers to create “custom Software Development Life Cycle(SDLC) workflows” that are triggered by events such as a <code>git push</code>, <code>issue creation</code> or a <code>new release</code>. With GitHub Actions, you can automate the building of a container, the deploying of a web service, or the onboarding of new users to your project.</p>
+<p>Check out the <a href="https://github.com/marketplace">GitHub Marketplace</a> to see all the cool GitHub Actions you can use to automate tasks on your project. These actions are created by the GitHub community. A number of them have been created by verified organizations and will have a badge to indicate so.</p>
+<p>In August 2019, <a href="https://github.blog/2019-08-08-github-actions-now-supports-ci-cd/">CI/CD support was added</a>. This means you can call GitHub Actions that can build, test and deploy your projects to any platform. In addition to building on Linux, you can also build on macOS and Windows. Performing matrix builds is supported, which is an extremely useful feature since there are very few CI/CD providers that support it. A matrix build allows you to test different versions of a software engine—such as Node or Python—on different operating systems. This helps maintainers ensure that code runs on different platforms and software versions they’ve declared support for.</p>
+<p>Here’s an example of YAML config file for GitHub:</p>
+<pre><code class="lang-yaml">jobs:
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version: [8, 10, 12]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Use Node.js ${{ matrix.node_version }}
+      uses: actions/setup-node@v1
+      with:
+        version: ${{ matrix.node_version }}
+
+    - name: npm install, build and test
+      run: |
+        npm install
+        npm run build --if-present
+        npm test
+</code></pre>
+<p>You can run your workflows on the GitHub platform, or you can run them on your own servers (for example, on containers or virtual machines). For open-source projects, CI/CD is completely free. For private repositories, you get 2,000 build minutes and over, depending which tier you’re on. Pricing for pipeline builds is separate and charged on build time, not number of users.</p>
+<p>The best way to learn how to use GitHub’s CI/CD services is through a practical demo. I’ve prepared a <a href="https://github.com/brandiqa/microblog-ci">Python Flask</a> project you can use. Simply fork it to your account, then click the <strong>Actions</strong> tab:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/01-GitHub-Actions.png" alt="GitHub Actions"></p>
+<p>You’ll see several templates you can use to define your workflow. On the first template, “Python application”, click the <strong>Set up this workflow</strong> button. You’ll be taken to the following view:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/02-GitHub-Workflows.png" alt="Python Application Action"></p>
+<p>Take the time to read through the proposed <code>pythonapp.yml</code> file that will be placed inside your project’s repo in the folder <code>.github/workflows</code>. Basically, this is what’s happening:</p>
+<ol>
+<li>A Docker base image is defined—the latest version of Ubuntu where our pipeline scripts will run.</li>
+<li>Python 3.7 is installed in the container.</li>
+<li>Pip is upgraded and project dependencies are installed.</li>
+<li><code>flake8</code> is installed, which is used to lint our code. Note that we need to define <code>--exit-zero</code> in order to treat syntax issues as warnings instead of errors, which would cause our pipeline to stop running.</li>
+<li>In the last bit, <code>pytest</code> is installed, which is used to run tests defined in the <code>tests</code> folder.</li>
+</ol>
+<p>Hit the <strong>Start commit</strong> button.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/03-Commit-Action.png" alt="Commit Action"></p>
+<p>I recommend that you provide a better commit message than the one I used above. I also recommend that you commit these new files directly on the master branch. I’m just committing on a separate branch so that you can have a clean project to experiment with. Once you hit the <strong>Propose new file</strong> button, GitHub will run your new pipeline automatically. The build process should occur fast. However, when you reach the test stage, it will fail. You can look through the logs to find out why it failed.</p>
+<p>To fix this, simply pull the latest version of your repo to your machine using the <code>git pull</code> command. Next, update the last line of <code>.github/workflows/pythonapp.yml</code> in your code editor to this:</p>
+<pre><code class="lang-bash">PYTHONPATH=. pytest -v
+</code></pre>
+<p>This should fix the <code>pytest</code> fail problem. Commit this new change and perform a <code>git push</code>. This should trigger a new build to run. After a couple of minutes, the results should be in:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/04-Pytest-Fix.png" alt="Pytest Fix"></p>
+<p>Now that we’ve fixed the testing stage, it’s probably a good idea to look into how we can do deployment. Simply take look at <a href="https://github.com/marketplace/actions/">GitHub’s Actions Marketplace</a>. You’ll find deployment workflows to popular platforms such as:</p>
+<ul>
+<li>Azure</li>
+<li>AWS</li>
+<li>Google Cloud</li>
+<li>Digital Ocean</li>
+<li>And many others …</li>
+</ul>
+<p>Deployment is an extensive topic and we can’t cover it here. Let’s look at the next platform.</p>
+<h2 id="gitlab-ci-cd">GitLab CI/CD</h2>
+<p><a href="https://gitlab.com/">GitLab</a> has been offering continuous integration services since 2015. I’ve provided the same <a href="https://gitlab.com/brandiqa/microblog-ci">project</a> on GitLab so that you can follow along. Once you’ve forked it to your account, you’ll be met with an option to enable Auto DevOps.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/05-gitlab-autodevops-settings.png" alt="gitlab autodevops settings"></p>
+<p>Auto DevOps is a feature that automatically provides a pre-defined CI/CD configuration, which allows you to build, test, deploy and monitor your project. The goal is to simplify the CI/CD process. In theory, this sounds great. However, in practice it didn’t work out for the Flask project I had.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/06-gitlab-autodevops-pipelines.png" alt="06-gitlab-autodevops-pipelines"></p>
+<p>The first problem I came across was that some of the predefined tasks took too long to complete. Also, the <code>test</code> stage was incorrectly defined. There’s also a requirement to set up a Kubernetes cluster on the Google Cloud Platform, which can be done via GitLab’s native Kubernetes integration.</p>
+<p>If this all sounds like a hassle to you, there’s an easier way to perform CI/CD on GitLab. Simply create a <code>.gitlab-ci-yml</code> file at the root of your project. Here’s some sample content you can use:</p>
+<pre><code class="lang-yaml">image: &quot;python:3.7&quot;
+
+before_script:
+  - python --version
+  - pip install -r requirements.txt
+  - pip install flake8
+  - pip install pytest
+
+stages:
+  - Static Analysis
+  - Test
+
+flake8:
+  stage: Static Analysis
+  script:
+  - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+pytest:
+  stage: Test
+  script:
+  - PYTHONPATH=. pytest -v
+</code></pre>
+<p>Commit this file and push it to your GitLab repo. This should trigger a successful run.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/07-gitlab-ci-passed.png" alt="gitlab ci passed"></p>
+<p>At first glance, it appears that GitLab’s syntax is cleaner than GitHub’s YAML CI config file. However, GitHub’s Actions makes it easy to perform complex tasks in just a few lines of configuration code. GitLab doesn’t have an equivalent to GitHub’s marketplace, so you’ll need to read <a href="https://docs.gitlab.com/ee/ci/examples/">step-by-step articles</a> on how to achieve specific CI tasks for different languages, frameworks and third-party platforms. You can learn more about GitLab’s CI/CD service <a href="https://gitlab.com/help/ci/quick_start/README">here</a>.</p>
+<h2 id="bitbucket-pipelines">Bitbucket Pipelines</h2>
+<p><a href="https://bitbucket.org/">Bitbucket</a> is another Git hosting provider that provides both public and free private repositories. They also provide a CI/CD service integrated into their platform called <a href="https://bitbucket.org/product/features/pipelines">Pipelines</a>. If your team uses <a href="https://www.atlassian.com/software/jira">Jira</a>, you can benefit from having the <a href="https://confluence.atlassian.com/bitbucket/integrating-jira-and-pipelines-965559953.html">best integration</a> with Bitbucket’s pipelines. The integration helps teams track associated builds and deployment to Jira issues. If you’re using GitHub’s CI/CD services, you can use <a href="https://github.com/marketplace?utf8=%E2%9C%93&amp;query=jira">Jira’s GitHub Actions</a> to integrate your GitHub repo with your Jira software.</p>
+<p>As I said earlier, the fastest way to learn a new platform is to follow a practical tutorial. Fork this <a href="https://bitbucket.org/brandiqa/microblog-ci">project</a> on your Bitbucket account if you have one. Open the <strong>Pipelines</strong> tab and scroll down. You should see something similar to this:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/08-bitbucket-pipelines.png" alt="bitbucket pipelines"></p>
+<p>As you can see, Bitbucket’s pipeline configuration is stored in the <code>bitbucket-pipeline.yml</code> file. Update the proposed configuration with the following:</p>
+<pre><code class="lang-yaml">image: python:3.7.3
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - pip
+        script: # Modify the commands below to build your repository.
+          - pip install --upgrade pip
+          - pip install -r requirements.txt
+          - pip install flake8
+          - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+          - pip install pytest
+          - PYTHONPATH=. pytest -v
+</code></pre>
+<p>Just like GitHub and GitLab, Bitbucket also uses Docker to define environments for running CI/CD scripts. Do note that for each <code>step</code>, a <a href="https://bitbucket.org/blog/multiple-steps-in-bitbucket-pipelines">separate Docker container</a> is used to run the script. Hit the <strong>Commit file</strong> button and watch the livestream logs as it runs. Once it completes, you should see the following result:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/09-bitbucket-pipeline-run.png" alt="bitbucket pipeline run"></p>
+<p>If you’d like to deploy your project, you’ll be glad to learn that Bitbucket provides what it calls <strong>Pipes</strong>, which is quite similar to GitHub Actions. You can simply add them to your config file to easily deploy your application to any hosting platform you use.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/10-Bitbucket-Pipes.png" alt="Bitbucket-Pipes"></p>
+<p>You can learn more about running Python projects in Bitbucket pipelines <a href="https://confluence.atlassian.com/bitbucket/python-with-bitbucket-pipelines-873891271.html">here</a>. You can also find more information <a href="https://confluence.atlassian.com/bitbucket/build-test-and-deploy-with-pipelines-792496469.html">here</a>. Let’s now conclude this guide.</p>
+<h2 id="summary">Summary</h2>
+<p>Having evaluated the CI/CD services offered by each Git Hosting Provider, I feel that GitHub’s offering is the best for new and experienced developers. It’s very fast to set up and its GitHub Actions ecosystem makes it super easy to integrate with other SDLC service providers. Deployment to any cloud hosting provider is also a breeze. I find it quite surprising how mature their product is, considering how long the alternatives have been in existence:</p>
+<ul>
+<li>GitLab Continuous Integration: <a href="https://gitlab.com/gitlab-org/gitlab-runner/blob/master/CHANGELOG.md">January 2015</a></li>
+<li>Bitbucket Pipelines: <a href="https://bitbucket.org/blog/bitbucket-pipelines-now-generally-available">October 2016</a></li>
+<li>GitHub Actions with CI/CD Support (Beta): <a href="https://github.blog/2019-08-08-github-actions-now-supports-ci-cd/">August 2019</a></li>
+</ul>
+<p>GitLab’s onboarding to their continuous integration service is not well thought out, as one has to dig through their documentation to find out the best way to configure a basic pipeline. One wonders why it’s necessary to set up a Google Cloud Kubernetes cluster for Auto DevOps, which is supposed to make life easier for developers. Both GitHub and Bitbucket excel at onboarding, as users only need to interact with the web interface to have a basic pipeline set up and running in less than a minute.</p>
+<p>Performing additional CI/CD configuration on GitLab requires you to read articles and tutorials, which isn’t a problem. But considering the alternatives—GitHub Actions and Bitbucket Pipes—new developers can use these “workflow templates” to configure advanced pipeline tasks without reading manuals.</p>
+<p>I do, however, have several gripes with Bitbucket. First, it’s impossible to use multiple <code>steps</code> in a Python project because each step uses a different Docker container. This means the results of one step are not automatically available to the next step. There are ways to <a href="https://confluence.atlassian.com/bitbucket/using-artifacts-in-steps-935389074.html">pass artefacts</a> with subsequent steps. Unfortunately, there’s no documentation on how to share pip packages with multiple steps. The solution is to bundle all your pipeline scripts into one step. On GitHub, <code>steps</code> are simply independent processes, not containers. So multi-steps on GitHub and GitLab for Python projects are not an issue.</p>
+<p>The second issue is that Bitbucket doesn’t offer custom runners, and you can’t run builds on Windows and macOS. At the time of writing, they only offer 50 minutes per month of free build time, while GitLab offers 2,000 minutes per month. GitHub is free for public projects and includes 2,000+ free minutes for private repositories, depending on which tier you’re on.</p>
+<p>To conclude, <a href="https://github.com/features/actions">GitHub Actions</a> is by far the best free CI/CD service with unlimited build time for open-source projects. It also has the ability to perform matrix builds on Linux, Windows and macOS simultaneously. It has the largest community by far, so if you have a question or encounter a problem, you’ll most likely get a response within 24 hours. Please don’t abuse the free service, though, as excessive usage will be detected and you may get banned.</p>
+<p>Now that you don’t have an excuse not to use pipelines, go ahead and CI/CD your projects living in GitHub.</p>
+</div>
+
+<!-- chapter 2 -->
+
+<div class="chapter" data-chapter-number="2">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 2 </span></div>
+<h1 class="chaptertitle">Visual Studio Extensions for Python Web Development</h1>
+<h3 class="author">Michael Wanyoike</h3>
+</div>
+
+<p>In this guide, we’ll look into how we can supercharge our Python web development workflow using Visual Studio Code extensions. There are currently thousands of free extensions written to support Python frameworks and platforms on VS Code. Do note that many of them haven’t been maintained in a while as they’re free to use and lack financial backing. For this guide, we’ll look at extensions that are popular and are being actively maintained and/or being developed.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>To follow along, you’ll need the following installed on your machine:</p>
+<ul>
+<li>A recent version of Python 3</li>
+<li>Latest version of <a href="https://code.visualstudio.com/">Visual Studio Code</a></li>
+</ul>
+<p>And of course, I’ll assume you have a solid foundation in Python fundamentals. Having some knowledge on writing Python tests and using a Python web framework such as <a href="https://www.palletsprojects.com/p/flask/">Flask</a> or <a href="https://www.djangoproject.com/">Django</a> would be ideal.</p>
+<h2 id="starting-a-python-project-in-vs-code">Starting a Python Project in VS Code</h2>
+<p>Most full-featured IDEs come with a wizard workflow for setting up projects based on your requirements. However, for simple code editors such as Sublime Text, Atom and VS Code, you’ll have to define your project via the command-line terminal. Here is a simple example of creating a Python project with a <code>virtualenv</code> environment:</p>
+<pre><code class="lang-bash"># Create project folder
+mkdir hello-project
+cd hello-project
+
+# Setup virtual environment
+python3 -m venv venv
+source venv/bin activate
+
+# Create python file and launch VS Code
+touch hello.py
+code .
+</code></pre>
+<p>When you launch a Python project in VS Code for the first time, you’ll be prompted to specify the interpreter:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/vscode-select-interpreter.png" alt="vscode select interpreter"></p>
+<p>Simply select the python interpreter in your virtual environment folder. From then on, all packages that you install for your project using VS Code will go into that folder. However, if you have a fresh install of VS Code with no extensions installed, you’ll at least need to install the official Python extension. In the next section, we’ll look at what it offers.</p>
+<h2 id="python-extension-by-microsoft"><a href="https://marketplace.visualstudio.com/items?itemName=ms-python.python">Python Extension by Microsoft</a></h2>
+<p>The <strong>official Python extension</strong> provides the majority of the tools you’ll need to work with Python projects in VS Code. With over 13 million downloads, this extension offers the core features required to supercharge writing Python code:</p>
+<ul>
+<li><strong>Environments</strong>: uses <a href="https://code.visualstudio.com/docs/python/environments">virtual environments</a> to run and install project dependencies.</li>
+<li><strong>Language support</strong>: provides snippets, syntax checking, <a href="https://code.visualstudio.com/docs/python/editing#_autocomplete-and-intellisense">IntelliSense and autocomplete</a>.</li>
+<li><strong>Code formatting</strong>: uses <a href="https://black.readthedocs.io/en/stable/"><code>black</code></a>, <a href="https://pypi.org/project/autopep8/"><code>autopep</code></a> or <a href="https://github.com/google/yapf"><code>yapf</code></a> to format your Python code based on standards.</li>
+<li><strong><a href="https://code.visualstudio.com/docs/python/editing#_run-selectionline-in-terminal-repl">Run Selection/Line in Python Terminal</a></strong>: allows you to use the shortcut key <kbd>Shift</kbd> + <kbd>Enter</kbd> to run sections of your code.</li>
+<li><strong>Debugging</strong>: allows for setting breakpoints and running the project in debug mode in order to inspect variables, instead of you having to print logs.</li>
+<li><strong>Testing</strong>: has a Test Explorer to run your tests, supporting <code>unittest</code>, <code>pytest</code> and <code>nose</code> testing frameworks.</li>
+<li><strong>Refactoring</strong>: can perform operations such as <a href="https://code.visualstudio.com/docs/python/editing#_refactoring">import sorting and method extraction </a> to refactor your Python code.</li>
+<li><strong>Linting</strong>: performs code analysis and highlights issues in editor using <code>Pylint</code>, <code>Flake8</code> etc.</li>
+<li><strong><a href="https://jupyter.org/">Jupyter Notebooks</a></strong>: allows you to edit <code>Jupyter</code> documents easily.</li>
+</ul>
+<p>The Test Explorer panel can be activated by pressing <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> and choosing <strong>Python:Configure Tests</strong>. You’ll be required to choose a test framework, then the folder where your tests are located. This should display a panel on the left side where you can run your tests at the click of a button. In addition, if you open a test file, there are clickable links that appear over your code allowing you to run individual test cases.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/editor-adornments-unittest.png" alt="Unittest adornnments"></p>
+<p>The Test Explorer seems like a cool feature. Unfortunately, in my experience it’s a bit buggy and not that useful. When a test fails, it doesn’t provide a report. When it comes to running the tests, using the command-line terminal is the best option. Perhaps by the time you’re reading this there may have been improvements in this regard.</p>
+<p>When it comes to linting, you’ll need to activate the feature by pressing <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> and choosing <strong>Select Linter</strong>. VS Code will give you a list of linter packages to choose from. My recommendation is to use <a href="http://flake8.pycqa.org/en/latest/">Flake8</a>, as it works well without raising unwanted issues. You can create a <code>.flake8</code> file at the root of your project to set your own linter rules. Here’s an example:</p>
+<pre><code class="lang-yaml">[flake8]
+max-line-length = 100
+ignore=E722
+</code></pre>
+<h2 id="python-indent-by-kevin-rose"><a href="https://marketplace.visualstudio.com/items?itemName=KevinRose.vsc-python-indent">Python Indent by Kevin Rose</a></h2>
+<p>Once you’ve installed a linter such as <code>Flake8</code> in your Python project, you may get a ton of highlighted issues in your code. One of the common ones is having incorrect alignment with your indentation when breaking long lines of code. Technically, this is not a syntax issue but a readability issue. To fix the problem, you’ll need to figure out the right amount of tabs and spaces to align each section of your code properly. An easier way is to install the Python Indent extension which will do the correct alignment for you automatically as you type your code. See the screenshot below for a demonstration.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/python-indent-demo.gif" alt="python indent demo"></p>
+<h2 id="visual-studio-intellicode-by-microsoft"><a href="https://marketplace.visualstudio.com/items?itemName=VisualStudioExptTeam.vscodeintellicode">Visual Studio IntelliCode by Microsoft</a></h2>
+<p>This is another extension by Microsoft that has quickly gained popularity and has over three million installs to date. It provides AI-assisted IntelliSense for Python, TypeScript, JavaScript and Java code. Unlike ordinary code completion that lists all options in alphabetical order, IntelliCode uses machine learning to list suitable options in the order that you’ll most likely select.</p>
+<p>To use it, you’ll need first to install the Python Extension from Microsoft we just discussed. Once you launch a Python project, it will request you to “Use the Python Language Server”. Just click the <strong>Enable it and Reload Window</strong> button. This will cause the editor to restart, but it won’t activate the feature right away, as you’ll need to wait a bit for the Language Server files to download on your machine. Once the download and extraction process is complete, start writing Python code and you’ll experience a much better autocomplete experience. You can also press <kbd>Ctrl</kbd> + <kbd>Space</kbd> to trigger the autocomplete options popup.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/python-intellicode-demo.gif" alt="python intellicode demo"></p>
+<p>I’d briefly like to mention the <a href="https://marketplace.visualstudio.com/items?itemName=tushortz.python-extended-snippets&amp;ssr=false#overview">Python Extended Snippets by Taiwo Kareem</a>, which provides a collection of snippets for Python code. It also does provide autocomplete as you type your code. However, it’s poorly documented and hasn’t been updated in the last four years.</p>
+<h2 id="code-runner-by-jun-han"><a href="https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner">Code Runner by Jun Han</a></h2>
+<p>The Code Runner extension allows you to run the selected code via a context menu or using the shortcut key <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>N</kbd>. It supports many programming languages including Python. Do note that the Python extension by Microsoft has a similar feature which is activated by a different shortcut key combination (<kbd>Shift</kbd> + <kbd>Enter</kbd>).</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/code-runner-demo.gif" alt="code runner demo"></p>
+<h2 id="better-jinja-by-samuel-colvin-"><a href="https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml">Better Jinja by Samuel Colvin</a></h2>
+<p>If you open HTML template files with Jinja code, you’ll notice that those sections are white. To implement colorization, you can install <a href="https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml">Better Jinja by Samuel Colvin</a>. You should note that Jinja templates don’t have a defined extension and you’ll find Jinja code used in <code>.html</code> files. You can use the “Change Language Mode” option to change file detection from <code>HTML</code> to <code>Jinja HTML</code>. Alternatively, you can associate all your <code>.html</code> files in your project workspace using the following settings in <code>.vscode/settings.json</code>:</p>
+<pre><code class="lang-json">{
+    &quot;files.associations&quot;: {
+       &quot;*.html&quot;: &quot;jinja-html&quot;
+    }
+}
+</code></pre>
+<p>Here’s how your Jinja code should look with this extension:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/better-jinja-demo.png" alt="Better Jinja Demo"></p>
+<p>There’s a more popular <a href="https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja">Jinja</a> extension, but it hasn’t been updated in a long time and is broken at the time of writing this guide. I would recommend you avoid it for now until it gets fixed.</p>
+<h2 id="django-by-baptiste-darthenay"><a href="https://marketplace.visualstudio.com/items?itemName=batisteo.vscode-django">Django by Baptiste Darthenay</a></h2>
+<p>With over 701k installs, this is the most popular Django extension that provides syntax colorization and snippets. After installation, you’ll need to create the file <code>.vscode/settings.json</code> and input the following for the extension to work:</p>
+<pre><code class="lang-json">{
+    &quot;emmet.includeLanguages&quot;: {&quot;django-html&quot;: &quot;html&quot;},
+    &quot;files.associations&quot;: {
+        &quot;**/templates/*.html&quot;: &quot;django-html&quot;,
+        &quot;**/templates/*&quot;: &quot;django-txt&quot;,
+        &quot;**/requirements{/**,*}.{txt,in}&quot;: &quot;pip-requirements&quot;
+    },
+}
+</code></pre>
+<p>When you open Django template files, you should see the extension at work as you type code. Unfortunately, the extension hasn’t been updated in almost an year. It lacks proper documentation and there are a number of issues that have been reported and haven’t been fixed. For example, the Emmet auto-indent functionality is broken. This will have a significant impact on coding speed. Users have also reported that IntelliSense is also not working.</p>
+<p>The problem is caused when you change the file association from the default <code>html</code> to a custom one like <code>django-html</code> or <code>jinja-html</code>. The fix requires a major rewrite on some parts of the extension to properly support auto-indentation and IntelliSense. If you’d like to contribute, you can follow this issue via this <a href="https://github.com/vscode-django/vscode-django/issues/5">link</a>.</p>
+<p>Here are other Django templates that offer the same features as this extension. They all require the <code>emmet</code> custom configuration. Do note that they all suffer from the same auto-indentation issue:</p>
+<ul>
+<li><a href="https://marketplace.visualstudio.com/items?itemName=bibhasdn.django-html">Django Template by bibhasdn</a>: requires no custom setting other than <code>emmet</code> config to activate.</li>
+<li><a href="https://marketplace.visualstudio.com/items?itemName=thebarkman.vscode-djaneiro">Djaneiro - Django Snippets by Scott Barkman</a>: provides a heap load of snippets, not only for template files but also for models, views, forms and other Django classes.</li>
+<li><a href="https://marketplace.visualstudio.com/items?itemName=bibhasdn.django-snippets">Django Snippets by bibhasdn</a>: provides a small collection of snippets mostly for Django models, views and forms.</li>
+</ul>
+<h2 id="flask-snippets-by-cstrap"><a href="https://marketplace.visualstudio.com/items?itemName=cstrap.flask-snippets">Flask Snippets by cstrap</a></h2>
+<p>With over 48k installs, this extension provides a moderate collection of snippets for Flask framework. It was ported from PyCharm, TextMate, Sublime Text and other code editors. There are no other relevant extensions that have been made for Flask. Here are a few examples:</p>
+<table>
+<thead>
+<tr>
+<th>Abbreviation</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hw</td>
+<td>Flask hello world</td>
+</tr>
+<tr>
+<td>route</td>
+<td>Flask route</td>
+</tr>
+<tr>
+<td>routegp</td>
+<td>Flask route with GET, POST</td>
+</tr>
+<tr>
+<td>routep</td>
+<td>Flask route POST only</td>
+</tr>
+</tbody>
+</table>
+<p>This extension provides snippets for both python files and templates. For template use, please note that it only works if the language association is set to <code>html</code>. To activate a snippet, just start typing the first three letters of the snippet code and an autocomplete popup will appear. For example, <code>ffor</code> will generate the following snippet:</p>
+<pre><code class="lang-jinja">{% for element in collection %}
+        {{ element|e }}
+{% endfor %}
+</code></pre>
+<p>For the rest of the snippets, they can only work in <code>*.py</code> files. For example, to quickly generate a route in <code>app/__init__.py</code>, start typing <code>routegp</code>, which will generate the following snippet:</p>
+<pre><code class="lang-python">@app.route(&#39;/route_name&#39;, methods=[&#39;GET&#39;, &#39;POST&#39;])
+def method_name():
+   pass
+</code></pre>
+<h2 id="autodocstring-by-nils-werner"><a href="https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring">autoDocstring by Nils Werner</a></h2>
+<p>This is a popular extension, with over 97k installs, designed to help Python developers to document functions in a consistent format. The following screenshot demonstrates how it works:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/autodocstring-demo.gif" alt="autodocstring demo"></p>
+<h2 id="better-comments-by-aaron-bond"><a href="https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments">Better Comments by Aaron bond</a></h2>
+<p>This popular extension with, over 498k installs, provides colorization to comments created in code. It uses annotations such as <code>!</code>, <code>*</code>, <code>TODO</code> and <code>param</code> to determine the color of the comment. You can change existing colors and define new styles to extend its functionality. This extension is especially useful for highlighting your code documentation and communicating with other developers in your team working.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/better-comments-demo.png" alt="better comments demo"></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>The extensions listed in this guide are designed to help Python developers to write high-quality code that’s well documented and consistent with the rest of the team’s contributions. They also help you avoid repetitive tasks such as indenting, closing tags and inserting common code. Unfortunately, some of these extensions don’t work as well as they should. If you have the time, the best option is to try to fix the bug yourself. Alternatively, you can live without it until a better solution is found.</p>
+</div>
+
+<!-- chapter 3 -->
+
+<div class="chapter" data-chapter-number="3">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 3 </span></div>
+<h1 class="chaptertitle">Containerizing Python Web Apps with Docker/LXD</h1>
+<h3 class="author">Tonino Jankov</h3>
+</div>
+
+<p>In production environments, containers allow us to encapsulate an entire environment in a reproducible and portable way. We can bootstrap a very complex setup in less than five minutes, and we can distribute it between the production environment and multiple members of the development team, making sure that they all have a uniform setup. Whoever has had to deal with nvm or RubyGems, with versions of packages, and debug their error messages knows what this means.</p>
+<p>To really understand the topic of Docker, LXC/LXD and their advantages over the classic virtualization, we need to go back and look at how these technologies came to be, and what similarities they share. In the server virtualization market, we distinguish two main types of virtualization—the hypervisor/virtual machine paradigm, and the container paradigm.</p>
+<h2 id="hypervisors-and-virtual-machines">Hypervisors and Virtual Machines</h2>
+<p>On a host machine, a platform called a <strong>hypervisor</strong> either replaces the operating system or runs on top of it, in order to provide the environment to run multiple virtual machines with different operating systems.</p>
+<p><a href="https://xenproject.org/">XEN</a> is one widely used hypervisor system that runs bare-metal, meaning that it has a direct and privileged access to the hardware. <a href="https://virtualbox.org">VirtualBox</a> is another type of hypervisor that runs like ordinary software within a host operating system.</p>
+<p>What’s common to all hypervisor and virtual machine systems is that, on top of the hypervisor layer (whether hypervisor is directly using hardware or it’s running on top of a host-machine operating system) there are virtual machines with their own complete operating systems.</p>
+<p>Guest operating systems are unique and self-sufficient, and virtual machines don’t share binaries, libraries, and so on.</p>
+<p>This provides a solid isolation of guest systems, but it also means that every hosted machine needs all the files for it to run—which is measured in tens of gigabytes.</p>
+<p>Virtual machines don’t share operating system kernels or any processes. Running virtual machines also means duplicating the memory footprint.</p>
+<p>The bare minimum of resources for Ubuntu server 18.04 LTS is 384MB RAM and around 1.5GB of storage. This is without the resources needed to run the software in this virtual machine. And we didn’t mention the resources the hypervisor itself needs.</p>
+<p>Considering that the normal minimum needs of virtual systems will more probably be around 500–600MB of memory and 2–3GB of storage, and that the host machine will be hosting more than one guest VM, it’s easy to see that these requirements will quickly add up.</p>
+<h2 id="containers">Containers</h2>
+<p>Google Trends shows that interest in Linux containers has been steadily growing in recent years:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/linux-containers-trends.png" alt="Linux container trends"></p>
+<p><strong>Containers</strong>, or <strong>Operating-system virtualizations</strong>, are a different paradigm that came from building on the decades-old UNIX <a href="https://wiki.archlinux.org/index.php/chroot">chroot</a>—a mechanism to restrict, or “jail” processes into their own user space. Although perhaps not equal to virtual machines, this still provides pretty strong isolation of resources and privileges, and many server industry software solutions have been built following this idea. Both the OS kernel, files and core system processes are shared (read-only). There’s no need for a software layer that will emulate physical hardware.</p>
+<p><a href="https://openvz.org/">OpenVZ</a>, <a href="https://www.freebsd.org/cgi/man.cgi?query=jail&amp;format=html">FreeBSD jails</a>, <a href="https://en.wikipedia.org/wiki/Virtuozzo_(company)">Virtuozzo</a> are some notable examples of OS-level virtualization.</p>
+<p>The advantages of this paradigm are that there’s no duplication of OS kernel and core OS processes. There’s no overhead. To simplify things a bit, a virtual container system consists, as an image, of configuration files. This often means it weighs under 100MB, is easy to distribute, takes up less resources, and—riding on the running processes of an existing host system—usually takes mere seconds to boot up.</p>
+<p>Products like OpenVZ have revolutionized VPS market, by making VPS servers amazingly cheap to run, providing developers entire operating system at their disposal, which they could customize as they like.</p>
+<h2 id="lxc-and-lxd-vs-docker">LXC and LXD vs Docker</h2>
+<blockquote>
+<p>LXC containers are often considered as something in the middle between a chroot and a full-fledged virtual machine. The goal of LXC is to create an environment as close as possible to a standard Linux installation but without the need for a separate kernel. — <a href="https://linuxcontainers.org/lxc/introduction/">LinuxContainers.org</a></p>
+</blockquote>
+<p>Although we saw on Google Trends that Linux containers had sparked interest years before, the initial release of <a href="https://linuxcontainers.org/">the product</a> with the same name was in 2008. LXC is, to quote its website, “<a href="https://linuxcontainers.org/lxc/introduction/">a userspace interface for the Linux kernel containment features</a>”.</p>
+<p>LXC is trivial to install. Even if we use Windows, we can install it through a WSL terminal.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/installing-lxc.gif" alt="Installation"></p>
+<p>To illustrate just how lightweight a footprint LXC containers have—compared with the 250–500MB minimum memory requirement just for virtual OS to run—<a href="https://www.reddit.com/r/homelab/comments/7a5g8i/lxclxd_or_docker/dp800td?utm_source=share&amp;utm_medium=web2x">there’s a story</a> of a user who, by mistake, created over a hundred containers, and had them run for some time on a single host server, and only noticed it due to DHCP networking, and running out of address space.</p>
+<p>LXC mainly targets sysadmins, and is a bit of a lower-level tool when compared to Docker, which was conceived as a more user-friendly tool that targets mainly developers. In fact, <a href="https://www.infoq.com/news/2014/03/docker_0_9/">for several years</a> Docker had used LXC as an execution environment, building a more user-friendly interface on top of it.</p>
+<p>LXC containers are meant to be thought of and used as full-fledged OS instances.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/kinsta-lxd-lxc.png" alt=""></p>
+<p>The image above shows <a href="https://kinsta.com/blog/boosting-wordpress-performance/">LXD &amp; LXC architecture at Kinsta.com</a>. Kinsta was <a href="https://kinsta.com/blog/sysadmin/">one of the early adopters</a> of LXD &amp; LXC for their premium WordPress hosting packages.</p>
+<p>Normal use case for LXC would be to have an entire LEMP stack installed and running on one LXC container. LXC, in this way, comes close to virtual machines.</p>
+<p>While it’s completely feasible to use Docker in this same way, it has a somewhat different philosophy.</p>
+<p>Docker containers are, usually, built on layers upon layers of images that add to container configuration, software, and so on. The resulting compound, layered images are then usually used to run a single application.</p>
+<p>So in the above example, every LXC container is a full-fledged LEMP system, with NGINX, MySQL, php-fpm running all in one container.</p>
+<p>With Docker, the ideal situation is different. The recommended way to structure applications is that every service has its own container. For example, a WordPress website would have NGINX (or another web software) container, MySQL container, and a PHP or WordPress container.</p>
+<p>Then it can also have a phpMyAdmin container, and a wp-cli container.</p>
+<p>LXC containers <a href="https://blog.risingstack.com/operating-system-containers-vs-application-containers/">can be thought of as OS containers</a>, and Docker containers as <em>app containers</em>.</p>
+<p>LXD is a somewhat newer tool for management of LXC containers. It has a back-end daemon and a command-line client that can talk to both a local daemon and remote daemons over a REAS API.</p>
+<p>It simplifies handling of LXC containers.</p>
+<p>Both <a href="https://linuxcontainers.org/">are sponsored by Canonical</a>.</p>
+<p>Containerizing a Django app using LXC will ultimately be almost the same as setting up a Django application on an actual dedicated or a virtual server, so it won’t be much different than simply setting up Django on an Ubuntu system. All our services will be running on a single machine.</p>
+<h2 id="dockerizing-django">Dockerizing Django</h2>
+<p>Those who had to work with non-trivial Django web applications, and deploy them into production, know that sometimes setting up the stack, and getting all the configuration just right, is a process that can be tedious and eat up a big percentage of time assigned to a project. Especially when we need to repeat it, debug the whole stack across different machines, and so on.</p>
+<p>Using Docker can often spare us the trouble.</p>
+<p>Docker containers are disposable and cheap to deploy. This means that we don’t need to worry anymore about Python environments, versions of installed packages, or accidentally introducing bugs into our dependency tree because of the wrong version number of some obscure package in our local pip repo. Once we have our environment set up, it’s easy to reproduce it.</p>
+<p>Docker uses <strong>Dockerfiles</strong> to configure individual containers, but since the entire idea of Docker is to separate the application into different services across different containers, Docker came up with <strong>Docker Compose</strong>, a handy tool and a domain-specific language for orchestrating Docker containers and specify their dependencies.</p>
+<p>So, to handle single containers, the command-line tool of choice is Docker, and to handle multiple containers, there is <code>docker-compose</code>.</p>
+<p>We can create a Dockerfile somewhere on our system, and save it with this content:</p>
+<pre><code class="lang-bash">FROM python:3.8.0
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /files
+WORKDIR /files
+COPY requirements.txt /files/
+RUN pip install -r requirements.txt
+COPY . /files/
+</code></pre>
+<p>These are commands that Docker will execute inside the running container. We can see that we are referring to a file, <code>requirements.txt</code>. This is a standard way of specifying all the Python libraries the container needs.</p>
+<p>We’ll add the latest Django version, and psycopg2, a PostgreSQL database adapter library to that file and save it:</p>
+<pre><code class="lang-bash">Django==2.2.7
+
+psycopg2&gt;=2.7,&lt;3.0
+</code></pre>
+<p>After we’ve saved the Dockerfile in the folder we were working on, we need to set up <code>docker-compose</code>. It uses the YAML file format.</p>
+<h2 id="docker-compose">Docker Compose</h2>
+<p><strong>Compose</strong> is another tool of the Docker platform. Because Docker follows the <a href="https://microservices.io/patterns/deployment/service-per-container.html">one-service-per-container philosophy</a>, following the modular microservices pattern, Docker’s authors published a tool that makes it possible to define multiple images in a single file, and to build and run multiple containers from these images.</p>
+<p>With Windows and macOS, we get <code>docker-compose</code> by installing Docker Desktop. With Linux, things may get <a href="https://github.com/fmidev/smartmet-server/wiki/Setting-up-Docker-and-Docker-Compose-(Ubuntu-16.04-and-18.04.1)">a bit more involved</a>, but not by much.</p>
+<p>Docker compose uses its own YAML-based domain specific language to define and orchestrate various services. The terminology used is <strong>services</strong>. (The word “containers” isn’t even used.) That reflects the idiomatic way to define our applications and to think about Docker setups.</p>
+<p>These instructions go into the file named <code>docker-compose.yml</code>.</p>
+<p>We’ll add these lines into the file, and save it in our working directory:</p>
+<pre><code class="lang-yaml">version: &quot;3&quot;
+
+services:
+  db:
+    image: postgres
+  app:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/files
+    ports:
+      - &quot;8000:8000&quot;
+    depends_on:
+      - db
+</code></pre>
+<p>Here we’ve defined two services—<code>db</code> and <code>app</code>—which will actually be two running containers once we start our app. The Docker engine is able to resolve the first container’s base to the latest  <a href="https://hub.docker.com/_/postgres">PostgreSQL image on Docker Hub</a> from a single line in our <code>docker-compose</code> file:</p>
+<pre><code class="lang-bash">image: postgres
+</code></pre>
+<p>This uses the slug or the name of an existing image of the same name.</p>
+<p>The <code>app</code> container will be built following the <code>build: .</code> directive, which tells Docker to find instructions for this container in the current directory. These are in the Dockerfile that we just created. The Dockerfile is the main file that the Docker engine will use by default to build and run a container.</p>
+<p>So, we can use the existing images from the Docker Hub or from our own location, either directly by using the <code>image</code> directive or by layering our own changes on top of existing images that we call upon in the <code>FROM</code> directive in our Dockerfiles.</p>
+<p>Now we need to execute the Django admin command to create our project:</p>
+<pre><code class="lang-bash">docker-compose run app django-admin startproject djangodocker
+</code></pre>
+<p>Here, <code>app</code> will be the name of the <em>app</em> block in our docker-compose. This command will start the installation process for all the software included:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/dinstalling-lxc.gif" alt="installation process"></p>
+<p>Once it’s done, we’ll have our entire stack installed.</p>
+<p>With this command, we ran <code>django-admin startproject djangodocker</code> in the context of our <code>app</code> container.</p>
+<h2 id="running-containers">Running Containers</h2>
+<p><code>docker-compose run</code> along with the name of our running container will behave the same as if we executed a command from the bash shell inside the given container.</p>
+<p>Our installation should be in the <code>djangodocker</code> folder inside our project folder.</p>
+<p>Many web frameworks offer what we call REPL—a read-eval-print loop—or a shell that we can log into and then use to issue commands in the context of our running application. Django is no different: we can run <code>python manage.py shell</code> to be logged in to the back end of our web app and inspect different variables, try out different functions without having to deploy code, and go through the web request process. We could do this with <code>docker-compose</code> as well.</p>
+<p>Now, in our <code>settings.py</code>, we’ll remove the SQLite3 default configuration and replace it with the configuration for PostgreSQL:</p>
+<pre><code class="lang-python">DATABASES = {
+    &#39;default&#39;: {
+        &#39;ENGINE&#39;: &#39;django.db.backends.postgresql&#39;,
+        &#39;NAME&#39;: &#39;postgres&#39;,
+        &#39;USER&#39;: &#39;postgres&#39;,
+        &#39;HOST&#39;: &#39;db&#39;,
+        &#39;PORT&#39;: 5432,
+    }
+}
+</code></pre>
+<p>Then we do <code>docker compose up</code> and watch our application get bootstrapped. We can then open <code>http://localhost:8000</code> in our browser , and we should see Django’s hello world page:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/django-hello.gif" alt="Django Hello world page"></p>
+<p>In real life, we’ll want to add a detach option, so that we get control of our terminal back. <code>docker-compose up -d</code> will run our containers in the background, while we get our terminal back to run other commands.</p>
+<h2 id="handling-the-containers">Handling the Containers</h2>
+<p>As we said, there are two command-line tools to handle docker containers—<code>docker</code> and <code>docker-compose</code>.</p>
+<p><code>docker</code> is the basic command-line interface for the Docker engine, and it can be used to configure Docker, build images, manipulate them, run containers, list and inspect containers, log in to running containers, inspect logs, and more.</p>
+<p>A full reference of all its subcommands <a href="https://docs.docker.com/engine/reference/commandline/docker/">can be found here</a>, or by running <code>$ docker help</code>.</p>
+<p>Some subcommands worth mentioning are listed below:</p>
+<ul>
+<li><p><code>$ docker image pull xyz</code>: “xyz” will be the name of an image on Docker Hub (a public repository of Docker images). This will download  the image xyz, which we can then run with <code>$ docker container run -d --name xyz-cont -p 8080:80 xyz</code>.</p>
+<p>  This will, in turn, launch a new container in the background, with an arbitrary name we chose—<code>xyz-cont</code>—and will map the container port 80 to our host machines’ port 8080. The last directive designates the image that will be used as the basis for our container—the image that we just downloaded from Docker Hub with <code>docker image pull</code>.</p>
+<p>  Now, if  that <em>xyz</em> image was nginx, for example, there would be a nginx start page on <code>http://localhost:8080</code>.</p>
+</li>
+<li><p><code>$ docker container</code>: a subcommand containing many different tools to handle containers.</p>
+</li>
+<li><p><code>$ docker exec  [OPTIONS] CONTAINER</code>: this will run a command in a specified container.</p>
+</li>
+<li><p><code>$ docker history  [OPTIONS] IMAGE</code>: this will show the history of the image.</p>
+</li>
+<li><p><code>$ docker image</code>: this contains subcommands for managing images, from pulling, pushing, <em>pruning</em> unused images, inspecting, importing, building.</p>
+</li>
+<li><p><code>$ docker info</code>: this will show information about the system.</p>
+</li>
+<li><p><code>$ docker kill [OPTIONS] CONTAINER [CONTAINER...]</code>: this will shut down the designated container.</p>
+</li>
+<li><p><code>$ docker logs [OPTIONS] CONTAINER</code>: this will show the logs of a container.</p>
+</li>
+</ul>
+<p>The Docker command will, by default, load the file named <code>Dockerfile</code> in the current directory.</p>
+<p><code>$ docker-compose</code> in many ways overlaps with the <code>$ docker</code> command. There are <code>build</code>, <code>bundle</code>, <code>config</code>, <code>exec</code>, <code>images</code>, <code>kill</code>, <code>pull</code>, <code>push</code>, <code>rm</code>, <code>run</code> and other subcommands available with docker-compose.</p>
+<p>Once we have a <code>docker-compose.yml</code> file in a directory, defining one or more services, similar to the file we used in our example, we can just execute <code>$ docker-compose up</code> to get our multi-service application up and running.</p>
+<p>If we first want to validate our <code>docker-compose.yml</code>, we’ll run <code>$ docker-compose config</code>.</p>
+<p><code>$ docker-compose ps</code> will list all the running containers, and when we add the <code>-a</code> decorator, that will include all the stopped containers. The output will look something like this:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/python-web-development-tools/images/docker-compose-ps.png" alt="The output"></p>
+<p>In our case, we named the Django container/service “app”, so if we want to log in to our container, we’ll run <code>$ docker-compose exec app /bin/bash</code>.</p>
+<p>The <code>exec</code> subcommand executes any command we give it in the context of our command, and in this example we’ve run bash shell.</p>
+<h2 id="summary">Summary</h2>
+<p>In this guide, we provided a quick overview of OS-level virtualization and two main projects that represent it. We then explained the rationale behind the virtualization, and demonstrated, briefly, how to Dockerize a new Django application.</p>
+</div>
+
+<!-- chapter 4 -->
+
+<div class="chapter" data-chapter-number="4">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 4 </span></div>
+<h1 class="chaptertitle">Where Should You Deploy Python Apps?</h1>
+<h3 class="author">Shaumik Daityari</h3>
+</div>  
+
+
+<p>You’ve completed your code on your Python project. It’s time to share your app to the intended audience. But where should you deploy your app? In this tutorial, we’ll cover various types of hosting options for deploying your Python app.</p>
+<p>Deployment is necessary in order to make your app available on the Web. When it sits on a server, users can access its functionality by sending a request to the server. This guide will help you to identify your requirements and assess various hosts based on these parameters. The objective is to help you decide the best host for your app.</p>
+<h2 id="selecting-a-web-host-">Selecting a Web Host</h2>
+<p>Once you’ve shortlisted a few hosting providers that may be able to run your Python app, you’ll need to select one of them. There are certain criteria you should consider before choosing a host, so let’s go over some common ones in this section.</p>
+<h3 id="is-your-stack-going-to-work-on-the-host-">Is Your Stack Going to Work on the Host?</h3>
+<p>The single most important consideration is perhaps the technology that the host uses. Is your stack compatible on the host? Do you use a version of the software that’s incompatible with the systems the host provides? You need to get definitive answers to these questions before selecting a host!</p>
+<h3 id="how-much-will-it-cost-">How Much Will It Cost?</h3>
+<p>Pricing is the next crucial consideration in your list, especially if you’re a small company. You’re bound to be constrained by your budget. However, the right way to go about it should be a combination of other factors too. For instance, does a host provide a free trial or a money-back guarantee? Should you select a long-term plan (say 30% off if billed annually) to save money but get attached to a host in the long term?</p>
+<h3 id="is-your-host-ready-for-your-growth-plans-">Is Your Host Ready for Your Growth Plans?</h3>
+<p>One crucial feature of a host is its scaling capabilities. While a host may be a good choice for you at present, will it keep up with your projected load a year from now? Does the host allow you to upgrade to a better plan without migrating to a different system? The answers to these questions will determine how much effort you’ll need to make to deal with growth in the near future.</p>
+<h3 id="other-features">Other Features</h3>
+<p>Hosting providers often provide extra features to sweeten the deal. Some examples of such add-on features include in-built version control, a free domain name, and DNS and caching servers. You should factor them into your analysis if these features are relevant to you.</p>
+<p>Now that you have a good idea of what questions to ask, let’s now explore various types of hosting for you to consider.</p>
+<h2 id="shared-hosting-services">Shared Hosting Services</h2>
+<p>Let’s start with the cheapest form of hosting available to a developer. In a <strong>shared hosting</strong> space, you’re given some resources on a system that is also used by a number of other clients.</p>
+<p>If you’re single developer with limited needs, or a company just starting out, you should give shared hosting a try. It’s the cheapest among the options discussed here and is usually easy to set up.</p>
+<p>The largest drawback of shared hosting is that your server’s health is dependent on the other apps also hosted on it. If a different app is hacked or overloaded, your app will be adversely affected. Shared hosting options also aren’t able to scale to higher loads.</p>
+<p>Resources are limited on shared hosts, and you may not have full control over them. If you have other dependencies for your app to run, it may not be wise to go for this type of host.</p>
+<p>When should you choose shared hosting? Due to its limited resources, you should first ensure that your app will run on the vendor’s platform. Additionally, if you have a low number of users now, but anticipate a growth in the near future, you should probably stay away from shared hosting and opt for our next option!</p>
+<p>If you think shared hosting is your thing, give <a href="https://www.webfaction.com/">WebFaction</a> or <a href="https://www.dreamhost.com/">DreamHost</a> a try.</p>
+<h2 id="infrastructure-as-a-service-iaas-">Infrastructure as a Service (IaaS)</h2>
+<p><strong>Infrastructure as a Service</strong> (IaaS) is a virtualized computing infrastructure on the cloud that you get access to instantly to deploy your app. In other words, you’re given access to a virtual machine on the cloud, where you can remotely log in and set up your app.</p>
+<p>IaaS has its fair share of advantages. First, the vendor takes care of the physical infrastructure, which includes high availability and scaling. You don’t pay for the initial setup costs and only pay for the resources you use. These systems are highly reliable, with practically no downtime and 24x7 monitoring. IaaS also gives you a lot of ability to customize how to deploy your app. Finally, the costs for low IaaS usage can rival those of shared hosting!</p>
+<p>There are certain situations when IaaS might not be the right choice for you. If you’re a large organization that has already invested significantly in creating the infrastructure, it may be difficult to let go of that investment and move to such a setup. Also, if your resource requirements are very large, you may be overpaying for IaaS.</p>
+<p>Given the flexibility that IaaS provides, a wide range of apps can be hosted on it. It’s probably the safe option for any type of app. IaaS can be of help, no matter what kind of app you’d like to host. Do you want something simple like a mailing or logging server? Or do you want to implement high availability through load balancers and a failover system? Do you have an uncertain roadmap, because of which you’re unsure of the changing technology stack for your app? IaaS will turn out to be a safe choice in all of these situations.</p>
+<p>Even if you expect a small number of users for your app, you can still go with IaaS, as its minimal implementations are good enough to rival shared hosting costs. The reason you should select IaaS is the ability to scale instantly in the near future.</p>
+<p>If you’d like to go with IaaS, I recommend looking at Amazon’s <a href="https://aws.amazon.com/ec2/">Elastic Cloud Compute (EC2)</a> or <a href="https://azure.microsoft.com/">Microsoft Azure</a>.</p>
+<h2 id="platform-as-a-service-paas-">Platform as a Service (PaaS)</h2>
+<p><strong>Platform as a Service</strong> (PaaS) is a cloud computing model where a vendor provides a combination of hardware and software for you to use. You can think of PaaS as a more specific service than IaaS, where you relinquish control of the operating system of the virtual machine. In PaaS, you’re provided with an operating system, standard libraries, programming languages and frameworks, and tools for building apps.</p>
+<p>Most of the benefits of IaaS hold true for PaaS too: you’re only charged for the resources you use, it’s easy to scale, and downtimes are low. With more control sitting with the vendor, you can focus on your app development and configuration. However, this is a double-edged sword, as there’s an added dependency on the vendor, since many components of the server are now vendor-managed.</p>
+<p>Typically, developers who have an app with a specific stack opt for PaaS. For instance, if your app runs on Django and SQL, you can use PaaS hosting to bypass configuration and maintenance of a web server (like installation and configuration of the <code>mod_wsgi</code> module for deploying Django on Apache). You should, however, be aware that each PaaS host requires you to make your code compatible with it. For instance, a Django/SQL app working in your local machine can’t directly be deployed on Heroku. At the same time, an app compatible for Heroku can’t directly be deployed to Google App Engine.</p>
+<p>If you have a specific stack—say, Django and MySQL—which you don’t foresee deviating from in the near future, you should go for PaaS. Remember that once you make a choice, migrating to a different PaaS host will take a lot of effort. Also, if your app requires new packages—sometimes those in development—PaaS may not have much support for them.</p>
+<p>Common PaaS vendors for web apps are <a href="https://www.heroku.com/">Heroku</a>, <a href="https://aws.amazon.com/elasticbeanstalk/">Amazon Elastic Beanstalk</a>, and <a href="https://cloud.google.com/appengine/">Google App Engine</a>.</p>
+<p>If you have a mobile or web app and require a server to host the back end of the app in the form of APIs, you may wish to opt for <strong>mobile Backend as a Service</strong> (mBaaS), which is a specific form of PaaS. <a href="https://firebase.google.com/">Google Firebase</a> and <a href="https://developer.apple.com/icloud/cloudkit/">Apple CloudKit</a> are the market leaders in this segment.</p>
+<h2 id="function-as-a-service-faas-">Function as a Service (FaaS)</h2>
+<p>While we’ve discussed various types of servers to host your app on, this category of hosting is called “serverless”. It doesn’t necessarily mean that there’s no server, but a developer doesn’t have to worry about any aspect of server management. In <strong>serverless computing</strong>, you deploy your app in parts called “functions”. Each function is triggered by an event and caters to a single use case, such as uploading a file. Also known as <strong>Function as a Service</strong> (FaaS), serverless computing allows you to deploy an app to the cloud without managing the server. Every time a request comes to your app, a micro server is generated to cater to it.</p>
+<p>Serverless computing leads to lower server costs, as you only pay for the resources consumed. Without having to worry about the various aspects of server management, deployment is a seamless process. And scalability is inherent in serverless architecture.</p>
+<p>Serverless is slightly slower than other types of cloud hosting. The primary reason for this is that instances are created in real time to cater to requests. If those extra few hundred milliseconds are important to you, serverless may not be the right choice for you. While serverless provides you with the opportunity to focus solely on your app, it also gives the vendor complete control over the server infrastructure. This takes essential control away from the developer. Consequently, debugging is difficult, and it’s dependent on the vendor providing you with the logs and access to the entire flow of the app.</p>
+<p>Due to the separation of app logic to form tightly coupled functions, serverless technology is only suited to simple apps. As an alternative, you can separate out functions from your core app to make them serverless. The primary concern in using FaaS is the lag in starting a micro-instance. When will this affect you? If opening the home page of your website or firing up a mobile app depends on serverless technology, those hundred-millisecond delays will definitely matter: users absolutely hate waiting for the first content to load. However, if you’re going to use serverless hosting for a part of your app—such as <a href="https://read.acloud.guru/how-to-add-file-upload-features-to-your-website-with-aws-lambda-and-s3-48bbe9b83eaa?gi=7bb28eed2f31">file upload</a> (which itself could potentially take a few seconds)—that extra little time probably won’t make much of a difference.</p>
+<p><a href="https://aws.amazon.com/lambda/">AWS Lambda</a> and <a href="azure.microsoft.com/en-in/services/functions/">Azure Serverless</a> are common FaaS services in the market.</p>
+<h2 id="wrap-up">Wrap Up</h2>
+<p>In this guide, we first considered the specific needs of your Python app when considering where to deploy it, as well as other questions you should ask when looking for a host. We then explored the various kinds of hosting—from traditional shared hosting to the various cloud hosting services in IaaS, PaaS and FaaS—considering which apps are suited to each option.</p>
+<p>With any luck, you’ll now find it a little easier to decide where and how to deploy your next Python app!</p>
+</div>

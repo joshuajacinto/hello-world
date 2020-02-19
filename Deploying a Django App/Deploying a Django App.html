@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang='en'>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Deploying a Django App</title>
+  <link rel="stylesheet" href="../assets/css/book.css" type="text/css" />
+
+</head>
+
+
+
+
+  <div class="page-frontmatter front set-front-matter">
+    <div class="title-name">
+      <h2 id="maintitle">Deploying a Django App</h2>
+    </div>
+    <p>Copyright © 2020 SitePoint Pty. Ltd.</p>
+
+    <ul>
+      <li>
+        <strong>Author:</strong> Tonino Jankov</li>
+      <li>
+        <strong>Cover Design:</strong> Alex Walker</li>
+    </ul>
+
+    <h2 id="notice-of-rights">Notice of Rights</h2>
+
+    <p>All rights reserved. No part of this book may be reproduced, stored in a retrieval system or transmitted in any form or by any means, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical articles or reviews.</p>
+
+    <h2 id="notice-of-liability">Notice of Liability</h2>
+
+    <p>The author and publisher have made every effort to ensure the accuracy of the information herein. However, the information contained in this book is sold without warranty, either express or implied. Neither the authors and SitePoint Pty. Ltd., nor its dealers or distributors will be held liable for any damages to be caused either directly or indirectly by the instructions contained in this book, or by the software or hardware products described herein.</p>
+
+    <h2 id="trademark-notice">Trademark Notice</h2>
+
+    <p>Rather than indicating every occurrence of a trademarked name as such, this book uses the names only in an editorial fashion and to the benefit of the trademark owner with no intention of infringement of the trademark.</p>
+  </div>
+
+  <div class="page-about front set-front-matter">
+    <div class="small-centered">
+      <p>
+        <img src="../images/sitepoint-gray.svg" alt="SitePoint logo" width="160" />
+        <br/> Published by SitePoint Pty. Ltd.</p>
+      <p>48 Cambridge Street Collingwood
+        <br/> VIC Australia 3066
+        <br/> Web: www.sitepoint.com
+        <br/> Email: books@sitepoint.com</p>
+    </div>
+
+    <!-- <h2 id="about-author">About the Author</h2>
+    <p>AUTHOR BIO</p> -->
+
+    <h2 id="about-sitepoint">About SitePoint</h2>
+
+    <p>SitePoint specializes in publishing fun, practical, and easy-to-understand content for web professionals. Visit <a class="uri" href="https://www.sitepoint.com/">sitepoint.com</a> to access our blogs, books, newsletters, articles, and community forums. You’ll find a stack of information on JavaScript, PHP, Ruby, mobile development, design, and more.</p>
+  </div>
+
+
+<!-- chapter 1 -->
+<div class="chapter">
+  <!-- <div class="ch-head">Chapter</div> -->
+  <h1 class="chaptertitle" id="deployment">Deploying a Django App</h1>
+<h3></h3>
+
+<p>After we’ve created a Django app, and we’ve finished our testing, we’ll start thinking about deploying our app to production. There are couple of directions we can take with this, and it will depend on the level of skills and effort we can invest, the cost we’re able to outlay, the flexibility we need in putting together our server software stack, and other variables.</p>
+<h2 id="different-options">Different Options</h2>
+<p>If we don’t want to spend a lot, or we aren’t ready to put together or maintain the software stack, we can choose to deploy to managed, shared hosting. These days, there are many shared hosts that allow for Python and Django applications—even providing one-click installations and allowing for SSH access.</p>
+<h3 id="shared-hosting">Shared Hosting</h3>
+<p>This may be the quickest and most worry-free solution for many needs, but it doesn’t stand out in terms of flexibility. Usually, the server, Python and Django versions, caching solutions and database are predetermined, and we can’t change them, meaning that we don’t have direct control over our hardware resources. However, for certain applications this will be a budget-effective solution, which may be the primary objective.</p>
+<p>A2 Hosting, SiteGround, and Bluehost are examples of this sort of web host.</p>
+<h3 id="vps-and-linux-hosting">VPS and Linux Hosting</h3>
+<p>In recent times, there’s been a proliferation of polished, user-friendly, VPS-based hosts like DigitalOcean and Cloudways, who are trying to bridge the skills gap that deploying onto raw Linux servers presents, making it easier and easier to deploy to VPS systems without being an expert.</p>
+<p><img src="../images/deployment/django-do.png" alt=""></p>
+<p>In addition to vendors like Cloudways (which is actually specialized in bootstrapping PHP applications), VPS and cloud vendors provide quick-install interfaces for all sorts of stacks—lower or higher level—that offer developers different levels of flexibility.</p>
+<p>The entry barrier is a lot lower than it was in Django’s early years, but managing apps on VPS or dedicated Linux physical servers requires some Linux command-line skills regardless of the one-click solutions that hosting vendors provide. This range of products is commonly referred to as <strong>Infrastructure as a Service</strong> (IaaS).</p>
+<h3 id="platform-as-a-service">Platform as a Service</h3>
+<p>For those developers who know what they’re doing, and yet don’t wish to have to deal with the entire software stack underlying their Django application, there’s PaaS.</p>
+<p><img src="../images/deployment/cloud-models.jpg" alt=""></p>
+<p>The illustration above shows the difference between three prevalent cloud models, differentiated by how much control is left to the customer and how much of the infrastructure is handled by the vendor. With <strong>Platform as a Service</strong> (PaaS), every single bit of software infrastructure—on top of the hardware—is handled by the vendor. This usually includes the framework itself—in our case, Django, WSGI (or, as we will discuss, ASGI), server software, database server, middleware, and so on.</p>
+<p>Vendors like Google App Engine, Heroku, and platforms such as <a href="https://www.pythonanywhere.com/">Pythonanywhere</a> and <a href="https://platform.sh/">Platform.sh</a> usually provide customers with the tooling, conventions and workflow needed to deploy Python web apps to their infrastructure. The customer provides the application logic and the vendor provides the platform.</p>
+<p>Other cloud vendors such as Microsoft Azure and Amazon also provide this model. Each vendor differs in the level of management, tooling and so on they provide to developers, so do your homework before choosing one.</p>
+<h2 id="server-interfaces">Server Interfaces</h2>
+<p>Web applications essentially respond to different (web) route requests by clients, by outputting some kind of code. Usually it’s a combination of static files, HTML markup, CSS, JSON data and other formats. What makes web apps different from mere web pages is their dynamic output.</p>
+<p>These applications aren’t equipped or optimized to serve web pages in production, to handle the HTTP protocol, to serve static files, to cache content in an optimized way that web servers like NGINX or Apache are.</p>
+<p>That’s why we have web server interfaces. If we deal with Python web app deployments in any significant way, we need to know about WSGI, and the newer web server interface ASGI.</p>
+<h3 id="web-server-gateway-interface">Web Server Gateway Interface</h3>
+<p><a href="https://www.python.org/dev/peps/pep-3333/">PEP (or Python Enhanced Proposal) 3333</a> from 2010 defines the Python Web Server Gateway Interface, an interface specification for communication between python web apps and servers. WSGI applications, compliant to the specification, are stackable, and pass on the requests and responses between the application and the server.</p>
+<p>From Python release 2.5, in 2006, Python implements its own WSGI server.</p>
+<p>The stackable nature of WSGI apps means that apps in the middle must implement both sides of the interface—server and application—and the top and bottom ones need to behave as server and application, respectively. This also means practically unlimited extendibility through middleware.</p>
+<h4 id="mod_python-and-mod_wsgi">mod_python and mod_wsgi</h4>
+<p>With Django apps, for years the standard has been Apache server + <a href="https://modwsgi.readthedocs.io/en/develop/">mod_wsgi</a>. mod_wsgi is an Apache server module first publicly released in 2007, when it replaced another module, <a href="https://en.wikipedia.org/wiki/Mod_python">mod_python</a>, which worked by embedding a Python interpreter into the Apache server process.</p>
+<p>Just as mod_python was a successor to CGI interface with Python in terms of efficiency, mod_wsgi succeeded mod_python.</p>
+<h4 id="uwsgi">uWSGI</h4>
+<p>Another implementation of the WSGI standard is uWSGI, an application server compliant with the WSGI standard, which has gained popularity in recent years. It’s capable of running as a standalone server, but it’s usually deployed behind NGINX as a reverse proxy. As the <a href="https://uwsgi-docs.readthedocs.io/en/latest/WebServers.html">docs</a> say:</p>
+<blockquote>
+<p>uWSGI supports several methods of integrating with web servers. It is also capable of serving HTTP requests by itself.</p>
+</blockquote>
+<p><a href="https://www.sitepoint.com/how-to-automate-app-deployment-to-alibaba-ecs-with-mina/">We wrote</a> about deployment flow of a Django app with uWSGI with <a href="https://github.com/mina-deploy/mina">Mina</a>, which is a capable and minimal deployment tool specialized for Rails apps, along with a <a href="https://www.youtube.com/watch?v=bVaHxabFW84">screencast</a>.</p>
+<p>Another tutorial by the author, describing deployment of a Flask web app on Alibaba Cloud, and which can be used to deploy web apps on any Linux server, <a href="https://www.alibabacloud.com/blog/setting-up-a-flask-application-on-alibaba-cloud-ecs-ubuntu-16-04_594502">can be found here</a>.</p>
+<p>uWSGI has extensive documentation that covers a wide range of scenarios, from standard cases like <a href="https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html">deployment of standard Django apps behind NGINX</a> and <a href="https://uwsgi-docs.readthedocs.io/en/latest/tutorials/heroku_python.html">deployment on Heroku</a> to using <a href="https://uwsgi-docs.readthedocs.io/en/latest/WebSockets.html">WebSockets</a>, and includes discussions about the separation of resources using <a href="https://uwsgi-docs.readthedocs.io/en/latest/Namespaces.html">Linux namespaces</a> versus LXC containers. uWSGI is currently one of the more robust server options for the WSGI stack.</p>
+<p>Other WSGI implementations to mention are <a href="https://gunicorn.org/">Gunicorn</a>, a Python web server installable via pip, which also recommends deployment behind a web server like NGINX, <a href="https://werkzeug.palletsprojects.com/en/0.16.x/serving/">werkzeug</a>, <a href="http://docs.cherrypy.org/en/latest/advanced.html#wsgi-support">CherryPy</a>, <a href="https://github.com/momyc/gevent-fastcgi">gevent-fastcgi</a> and numerous others.</p>
+<p>If we deploy a WSGI application and server behind a server like NGINX, our virtual host file will simply proxy the requests to the dynamic part of our app to the WSGI server running on a certain port on localhost, by using the <code>proxy_pass</code> directive:</p>
+<pre><code class="lang-nginx"> server {
+    listen 80;
+    server_name website.xyz;
+    access_log  /var/log/nginx/websitexyz.log;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+  }
+</code></pre>
+<p>When we use uWSGI as an application server, according to <a href="https://uwsgi-docs.readthedocs.io/en/latest/Nginx.html">the docs</a>, we can also pass requests via Unix sockets, using the <a href="https://uwsgi-docs.readthedocs.io/en/latest/Nginx.html">uwsgi_pass</a> directive:</p>
+<pre><code class="lang-python">uwsgi_pass unix:///tmp/uwsgi.sock;
+include uwsgi_params;
+</code></pre><p>More information about the WSGI standard can be found <a href="http://wsgi.tutorial.codepoint.net/intro">here</a>, and the documentation has <a href="https://modwsgi.readthedocs.io/en/develop/user-guides.html">user guides for a wide range of cases</a>.</p>
+<h3 id="asynchronous-web-server-interface">Asynchronous Web Server Interface</h3>
+<p>Asynchronous Web Server Interface, or ASGI, is described in <a href="https://asgi.readthedocs.io/en/latest/">its documentation</a> as “a spiritual successor to WSGI”. It aims to be backward-compatible with WSGI, but to provide support or interface for asynchronous applications and web servers.</p>
+<p>This interface is meant to provide for long-polling and WebSocket connections.</p>
+<p>The asynchronous ASGI server works as an event loop, so a simple application, to borrow <a href="https://asgi.readthedocs.io/en/latest/introduction.html">from the docs</a>, might look like this:</p>
+<pre><code class="lang-python">async def application(scope, receive, send):
+    event = await receive()
+    ...
+    await send({&quot;type&quot;: &quot;websocket.send&quot;, ...})
+</code></pre>
+<p>Aside from the async event loop, the ASGI specification also provides for WSGI applications, so that compatibility is maintained.</p>
+<p>The project that the entire specification originates from is <a href="http://channels.readthedocs.io/">Django Channels</a>, which aims to <a href="https://www.sitepoint.com/premium/books/django-channels-for-real-time-updates">bring asynchronous support to Django</a>.</p>
+<p>The implementations recommended by the Django docs include <a href="http://github.com/django/daphne">Daphne</a>, which is a reference implementation of the spec written on top of <a href="https://twistedmatrix.com/trac/">Twisted</a>, an event-based, lower-level server or engine, and <a href="https://www.uvicorn.org/">Uvicorn</a>, an ASGI web server that supports WebSockets, includes Gunicorn worker class, and is wsgi-compatible.</p>
+<p>According to some benchmarks, Uvicorn is faster even than <a href="https://www.techempower.com/benchmarks/#section=data-r15&amp;hw=ph&amp;test=json&amp;l=hr9urj&amp;c=3">Node.js</a>, but for a real benchmark, we would have to have very similar, almost identical applications to compare on top of Uvicorn and Node.</p>
+<h2 id="deployment-some-method-to-the-madness">Deployment: Some Method to the Madness</h2>
+<p>Heroku, one of the main PaaS cloud vendors today, started in 2007 mainly as a platform for Ruby applications. By 2010, when it was <a href="https://techcrunch.com/2010/12/08/breaking-salesforce-buys-heroku-for-212-million-in-cash/">acquired by Salesforce</a>, Heroku supported most modern server-side languages.</p>
+<p>Its developers, led by Adam Wiggins, came up with a methodology framework for server applications deployment in 2011 that addresses many, if not most, deployment problems.</p>
+<p>It’s now available as an <a href="https://12factor.net/">online and EPUB book</a> and can be read for free. Many developers have found these twelve considerations very useful, so we’ll mention them here and later discuss Django deployment in light of them.</p>
+<p>The rules, paraphrased, are as follows:</p>
+<ul>
+<li><p>There should exist a single codebase, tracked by a source-control system like Git, for many different deployments, such as development, staging, and production.</p>
+</li>
+<li><p>Dependencies should be explicit. Even implicit reliance on system tools like cURL should be avoided.</p>
+</li>
+<li><p>App configuration that differs from one deployment environment to the other needs to be separate from the deployed code (not stored as hard-coded constants).</p>
+</li>
+<li><p>Services such as databases, queueing systems, and email of caching systems, are treated as swappable resources that can be replaced, depending on the deployment environment, without code changes. All the data needed should be in the configuration.</p>
+</li>
+<li><p>There are three stages to deploying an app to production: <em>build</em>, <em>release</em>, and <em>run</em>.</p>
+<p>The <strong>build</strong> stage prepares the codebase to be executed. It fetches the dependencies, compiles static assets, and so on.</p>
+<p>The <strong>release</strong> stage takes the build and combines it with the deployment configuration so that it can be executed in the target environment.</p>
+<p>The <strong>run</strong> stage launches the app into execution, so that app is <em>live</em> and <em>running</em>.</p>
+<p>According to this framework, there is—or should be—a clear separation between these three stages of deployment. Releases have their unique identifiable IDs. All changes to the codebase or configuration should mean that there’s a new <em>release</em>.</p>
+</li>
+<li><p>The app is executed as one or more processes that are stateless: data doesn’t rely on memory of the process or disk cache for any longer time. Processes share nothing and data is outsourced to outside services like a database.</p>
+</li>
+<li><p>Port binding means that the web server can be decoupled from the application, and the application is self-contained: it lives at a certain port receiving requests.</p>
+</li>
+<li><p>Concurrency and assigning different types of tasks to different processes is required. Also, the ability to scale our application horizontally via stateless processes.</p>
+<p>Since these processes should not be daemonized or written to PID files, there will need to be a process manager such as <a href="https://askubuntu.com/questions/938781/which-to-use-systemd-or-supervisor">supervisord or systemd</a>, each having their own advantages.</p>
+</li>
+<li><p>Disposable processes means that processes can be shut down or started fast, and that graceful shutdowns guarantee that already started requests/tasks will finish while the app will stop creating new processes.</p>
+</li>
+<li><p>Parity between development and production greatly reduces complexity of deployments. Best practices mean reducing the time gap between development and production (small and frequent deployments), reducing the personnel gap (the same people developing the application are closely involved in deploying it in production) and reducing the tooling gap—by keeping the software stack similar between development and production environments. This keeps the complexities and possible issues resulting from different stacks between development and production at a minimum.</p>
+</li>
+<li><p>Logs should be treated as event streams, and consuming them should be left out of the application itself (sometimes sent to a specialized piece of software for more detailed and useful analysis).</p>
+</li>
+<li><p>Administrative tasks and management processes should be run in the deployment environment. Admin code should be part of deployed code.</p>
+</li>
+</ul>
+<p>These principles should be taken as guidelines, not hard rules, because they are there to make the lives of developers, DevOps engineers and administrators easier.</p>
+<p>How does Django stack up against these demands, and how can we apply these when deploying our apps?</p>
+<p>Regarding the first rule, which says that we should have a single, version-control-tracked codebase for multiple deployment environments, Django settings are, by default, in the <code>settings.py</code> file—meaning that we would need to change this file for deployment to each environment. We would be deploying different code to each environment, and our deployment flow wouldn’t be as smooth.</p>
+<p>WSGI is <em>the</em> standard with Python web apps, including Django. This means that when we start our project, the subfolder that contains our base app (the one with the name of our project, which we here named <code>xyz_app</code>) will have a <code>wsgi.py</code> file:</p>
+<pre><code class="lang-python">&quot;&quot;&quot;WSGI config for xyz_app project.
+
+It exposes the WSGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/
+&quot;&quot;&quot;
+
+import os
+
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;xyz_app.settings&#39;)
+
+application = get_wsgi_application()
+</code></pre>
+<p>One environment variable here comes to our rescue: <code>DJANGO_SETTINGS_MODULE</code>. We could change the filename and path to our <code>settings.py</code> file here and make it custom.</p>
+<p>However, this still wouldn’t be the cleanest solution. Maybe it would be nicer to have a conditional loading of different files, depending on the environment. Multitple developers working on a single repo also present a challenge here.</p>
+<p>Another way to solve this is, after all the other settings in <code>settings.py</code>, to override the default environment by importing all the variables from a user and/or deployment-specific settings file. If such file doesn’t exist, we simply <code>pass</code>.</p>
+<p>One Django package that tries to provide us with a comprehensive control over the different settings files is <a href="https://django-split-settings.readthedocs.io/en/latest/">django-split-settings</a>. It enables us to organize our settings over multiple files and directories. <a href="https://dev.to/wemake-services/managing-djangos-settings-37ao">This blog post</a> covers this solution for multiple environments in more details.</p>
+<p>The second rule says that dependencies need to be specified explicitly. In order to achieve this, we will <em>freeze</em> our Python packages and modules environment by executing in our project root:</p>
+<pre><code class="lang-python">pip freeze &gt; requirements.txt
+</code></pre>
+<p>This will output all the specific Python packages we’re using locally, so we can reproduce the same dependencies on other servers.</p>
+<p><img src="../images/deployment/requirements.png" alt=""></p>
+<p>Then we’ll be able to install the same set of packages on another system by executing the following:</p>
+<pre><code class="lang-bash">pip install -r requirements.txt
+</code></pre>
+<p>If we have different package requirements for different deployment environments—which will be the case—we’ll create multiple requirements files, one for each environment, which will make it possible for us to distribute the same code as part of a single repository, and different developers will be able to reproduce the same Python execution environment locally. We can have a directory with separate requirements files to install in each environment:</p>
+<pre><code class="lang-text">--requirements
+  |-development.txt
+  |-staging.txt
+  |-production.txt
+</code></pre><p>The third rule deals with configuration, which should be a part of the environment and not the code. This way there’s strict separation of configuration and the code.</p>
+<p>To follow this guideline, we can use <a href="https://django-environ.readthedocs.io/en/latest/">django-environ</a>, a package that makes it easy to deal with settings and environment variables for different deployment environments. With it, we create different <code>.env</code> files, which we populate with different environment variables. These files are excluded from version control by adding them to <code>.gitignore</code>, and once included in our settings, we can access different environment variables in the <code>environ</code> variable.</p>
+<p>Beside the <a href="https://django-environ.readthedocs.io/en/latest/">django-environ docs</a>, we can read more about advantages and caveats of implementing this package <a href="https://djangostars.com/blog/configuring-django-settings-best-practices/">here</a>.</p>
+<p>The fourth rule suggests that outside resources like databases should be swappable without changes in the code. With Django, an <a href="https://docs.djangoproject.com/en/3.0/topics/db/">Object-relational Mapper</a> abstraction layer takes care of this. The only changes we need to make to swap SQlite for  PostgreSQL are configuration or environment variables.  </p>
+<p>This is why it’s a good idea to use Django ORM syntax for our queries and not SQL: we won’t need to make changes to our code if we swap database engines.</p>
+<p>If we talk about queuing services, the Django Celery library provides swappable broker back ends, which can be Redis, RabbitMQ or others.</p>
+<p>The build, release and run stages from the fifth principle won’t be as clearly cut, since with Python we don’t have so clear a <em>build</em> phase. Python is an interpreted language, and we need to have a unique ID for every release. This may be more clear when we use Docker, as we’ll discuss later.</p>
+<p>The sixth rule is about stateless processes that don’t share any data. Django largely adheres to this principle. Data is kept in database, and even the cache can be configured to rely on outside processes/services between requests.</p>
+<p>The seventh rule about the port binding demands that our application can be consumed on a certain port and that it can be decoupled from the web server. Services that make our app should, in this way, be contained.</p>
+<p>We spoke about the <code>proxy_pass</code> and <code>uwsgi_pass</code> directives in our NGINX server configuration. Our WSGI apps will usually serve requests on some non-standard port (or Unix socket) on localhost, and NGINX will run as a reverse proxy.</p>
+<p>This means that we can easily swap NGINX for some other server that will do the same. This is possible with the <code>mod_wsgi</code> or uwsgi server, because the application stays decoupled from the web server, while this couldn’t be achieved with <code>mod_python</code> (the now deprecated Apache module that was used in the past for Django deployments), as the module actually embeds the Python interpreter into the web server process.</p>
+<p>The eighth rule is about concurrency and horizontally scalable services. If we’ve followed guidelines four, six and seven, it’s relatively simple to horizontally scale our web app, because it’s modular, and its front-end web server can easily be configured for another back end, another IP or physical machine.</p>
+<p>The simplest NGINX setup for load balancing, handling three different back ends, can be set up with a simple configuration that looks something like this (from the NGINX docs):</p>
+<pre><code class="lang-nginx">http {
+    upstream myapp1 {
+        server srv1.example.com;
+        server srv2.example.com;
+        server srv3.example.com;
+    }
+
+    server {
+        listen 80;
+
+        location / {
+            proxy_pass http://myapp1;
+        }
+    }
+}
+</code></pre>
+<p><code>srv1</code>, <code>srv2</code> and <code>srv3</code> can be normal NGINX and uWSGI setups, or it can be servers configured to run directly just with uWSGI.</p>
+<p>The ninth rule (or guideline) suggests that our processes can be spun up quickly, and gracefully shut down, without disrupting the application. One side of this relies on our web server setup. And if we use NGINX and an app server like uWSGI, the NGINX configuration will be responsible for juggling incoming web requests and passing them on to the Python app.</p>
+<p>Regarding the database writes, they are also atomic, and Django provides database transaction management with the <code>ATOMIC_REQUESTS</code> setting in the <code>DATABASES</code> block in <code>settings.py</code>. When set to true, Django will make sure that there are no conflicts if multiple requests attempt to write to the database, and that unsuccessful writes revert all changes and shut down gracefully.</p>
+<p>The development/production parity demands that there are minimal differences between deployment environments. Developers sometimes keep different databases, and we’ve already covered how to separate variables in <code>settings.py</code> files by environments.</p>
+<p>Django projects usually make use of the <a href="https://docs.python.org/3/library/logging.html"><code>logging</code> module from Python’s Standard Library</a> and route the output to a file.</p>
+<p>The twelfth rule, demanding that administrative/management tasks be run in the deployment environment, can be satisfied by default simply by the fact that Django’s <code>manage.py</code> facility is available in every Django project and is part of the code.</p>
+<h2 id="the-checklist">The Checklist</h2>
+<p>Django docs provide us with a <a href="https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/">list of deployment points</a> we need to go through, settings variables and administrative tasks to run. The command <code>python manage.py check --deploy</code> in our project root will output a list of things we need to adjust to make our Django app production ready. Some of the settings we will need to change are:</p>
+<ul>
+<li><p><code>DEBUG = True</code>: this has to be changed in <code>settings.py</code> for security reasons. We don’t want all the details of our Django installation to be publicly available.</p>
+</li>
+<li><p><code>DATABASES</code>: this setting will usually need to be changed, if for no other reason that that by default, Django enables the SQLite database, and in production we’ll probably want to use PostgreSQL.</p>
+</li>
+<li><p><code>EMAIL_BACKEND</code>, <code>MEDIA_ROOT</code> and <code>STATIC_ROOT</code> will need to be changed. We will want to run <code>django-admin collectstatic</code> to copy our static files to a directory, from which they’ll be served in production by a web server.</p>
+</li>
+</ul>
+<p>One of the valuable steps in preparing our app for deployment will be to make sure that our templates can be compiled/cached, because doing so on every request would inflict a significant performance impact. We’ll add <code>django.template.loaders.cached.Loader</code> to our loaders list:</p>
+<pre><code class="lang-python">TEMPLATES = [{
+    &#39;BACKEND&#39;: &#39;django.template.backends.django.DjangoTemplates&#39;,
+    &#39;DIRS&#39;: [os.path.join(BASE_DIR, &#39;templates&#39;)],
+    &#39;OPTIONS&#39;: {
+        &#39;loaders&#39;: [
+            (&#39;django.template.loaders.cached.Loader&#39;, [
+                &#39;django.template.loaders.filesystem.Loader&#39;,
+                &#39;django.template.loaders.app_directories.Loader&#39;,
+                &#39;path.to.custom.Loader&#39;,
+            ]),
+        ],
+    },
+}]
+</code></pre><p>We recommend readers go through the official <a href="https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/">deployment checklist</a>.</p>
+<h2 id="deployment-tools">Deployment Tools</h2>
+<h3 id="docker">Docker</h3>
+<p>We already wrote about packaging Django applications with Docker. Here we’ll just remind the readers of the main principles and benefits we can get from Docker.</p>
+<p>One of the main Docker philosophies is “one service, one container”. This is why, ideally, we’ll have at minimum one database container, one webserver container (like NGINX) and one web app container with a WSGI application (uWSGI + app). This will enable us to satisfy many of the twelve rules and to decouple our app and make it modular. It will make it easy to explicitly specify our dependencies, environments and to distribute them and create atomic builds.</p>
+<p>A uWSGI container configured to listen at a certain port will make it possible to scale our app to any number of machines, with a front-facing NGINX load balancer.</p>
+<p>Docker-compose enables us to specify system-wide environment variables for every container.</p>
+<h3 id="fabric">Fabric</h3>
+<p>We mentioned Mina, a Ruby gem from the Ruby ecosystem that we can use to deploy Django apps. A similar tool, only written in Python, and therefore more idiomatic for deploying Django apps, is <a href="http://www.fabfile.org/">Fabric</a>. It connects to one or more remote hosts via SSH and executes shell commands there. The current version we should use is fabric2, while we need fabric1 (just <em>fabric</em>) if our app uses the unsupported Python 2.</p>
+<p><img src="../images/deployment/install-fabric.gif" alt=""></p>
+<p>This installation will leave us with a command <code>fab2</code>, and Fabric will expect a <code>fabfile.py</code> file in the same directory with defined tasks.</p>
+<p><strong>Fabfile</strong> is where we define environment variables that we need for deployment, where we define our separate environments and define tasks to be performed in each of them.</p>
+<p>The entire, detailed deployment flow for each of the scenarios we mentioned so far is out of the scope of this guide, but we’re giving here a very simple example of what our fabfile might look like. This is merely an introduction to fabfile structure and syntax, and not a complete fabric deployment guide.</p>
+<pre><code class="lang-python">import sys
+from fabric2 import Connection, task
+from invoke import Responder
+from fabric2.config import Config
+
+PROJECT_NAME = &quot;djangoXYZ&quot;
+PROJECT_PATH = &quot;~/testfabric&quot;
+REPO_URL = &quot;https://github.com/tyaakow/roots.git&quot;
+
+def get_connection(ctx):
+    try:
+        with Connection(ctx.host, ctx.user, connect_kwargs=ctx.connect_kwargs) as conn:
+            return conn
+    except Exception as e:
+        return None
+
+
+# here we are defining different deployment environments
+# with different variables - from a custom SSH key file to
+# different host IPs (obviously the `ctx.host` IP addresses will need
+# to be replaced with real IPs)
+
+@task
+def development(ctx):
+    ctx.user = &quot;root&quot;
+    ctx.host = &quot;95.***.***.81&quot;
+    ctx.connect_kwargs.key_filename = &quot;/home/t/.ssh/id_rsa_2&quot;
+
+@task
+def staging(ctx):
+    ctx.user = &quot;root&quot;
+    ctx.host = &quot;95.***.***.82&quot;
+    ctx.connect_kwargs.key_filename = &quot;/home/t/.ssh/id_rsa_2&quot;
+
+@task
+def production(ctx):
+    ctx.user = &quot;root&quot;
+    ctx.host = &quot;95.***.***.83&quot;
+    ctx.connect_kwargs.key_filename = &quot;/home/t/.ssh/id_rsa_2&quot;
+
+# check if file exists
+def exists(file, dir):
+    return file in dir
+
+
+# git tasks
+@task
+def pull(ctx, branch=&quot;master&quot;):
+    # check if ctx is Connection object or Context object
+    # if Connection object then calling method from program
+    # else calling directly from terminal
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+
+    with conn.cd(PROJECT_PATH):
+        conn.run(&quot;git pull origin {}&quot;.format(branch))
+
+
+@task
+def checkout(ctx, branch=None):
+    if branch is None:
+        sys.exit(&quot;branch name is not specified&quot;)
+    print(&quot;branch-name: {}&quot;.format(branch))
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+    with conn.cd(PROJECT_PATH):
+        conn.run(&quot;git checkout {branch}&quot;.format(branch=branch))
+
+
+@task
+def clone(ctx):
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+
+    ls_result = conn.run(&quot;ls&quot;).stdout
+    ls_result = ls_result.split(&quot;\n&quot;)
+    if exists(PROJECT_NAME, ls_result):
+        print(&quot;that project is already cloned&quot;)
+        return
+    conn.run(&quot;git clone {} {}&quot;.format(REPO_URL, PROJECT_NAME))
+
+@task
+def migrate(ctx):
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+    with conn.cd(PROJECT_PATH):
+        conn.run(&quot;python manage.py migrate&quot;)
+
+
+# supervisor tasks. Supervisor is a capable process manager
+# that will come especially handy if we use
+# queuing systems such as Celery
+
+@task
+def start(ctx):
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+    conn.sudo(&quot;supervisorctl start all&quot;)
+
+
+@task
+def restart(ctx):
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+    print(&quot;restarting supervisor...&quot;)
+    conn.sudo(&quot;supervisorctl restart all&quot;)
+
+@task
+def stop(ctx):
+    if isinstance(ctx, Connection):
+        conn = ctx
+    else:
+        conn = get_connection(ctx)
+    conn.sudo(&quot;supervisorctl stop all&quot;)
+
+
+# deploy task
+@task
+def deploy(ctx):
+    conn = get_connection(ctx)
+    if conn is None:
+        sys.exit(&quot;No connection&quot;)
+    clone(conn)
+    with conn.cd(PROJECT_PATH):
+        print(&quot;checking out the dev branch...&quot;)
+        checkout(conn, branch=&quot;dev&quot;)
+        print(&quot;pulling the code from github dev branch...&quot;)
+        pull(conn)
+        print(&quot;executing migrations...&quot;)
+        migrate(conn)
+        print(&quot;restarting the supervisor...&quot;)
+        restart(conn)
+</code></pre>
+<p>When we save this file in our project root, locally, we’ll be able to run tasks like <code>fab2 development pull</code> or <code>fab2 production deploy</code>.</p>
+<p>For complete documentation, see the <a href="http://docs.fabfile.org/en/2.5/getting-started.html">Fabric website</a>.</p>
+<p>Another tool that we need to mention when discussing Django deployment is <a href="https://www.ansible.com/">Ansible</a>. Ansible is an open-source configuration management tool and automation tool/platform by Red Hat. It’s mostly used in bigger deployment environments, with multiple machines that need to be orchestrated. It uses the YAML format for programming its tasks, so it’s accessible without a steep learning path. Its YAML playbook files are human-readable.</p>
+<p>It uses the SSH protocol to provision and set up servers, which don’t need any agent software installed. Ansible pushes “modules” via SSH to the client machines, which act as small programs.</p>
+<p><img src="../images/deployment/ansible-playbook.png" alt=""></p>
+<p>Ansible can be used for orchestrating multiple servers, setting them up, managing their configuration and automate processes. Ansible can be used with Fabric to automate setup and deployment of hosts of servers. By itself it provides richer semantics, and it may take a bit more time to get to know all it provides.</p>
+<p>To <a href="https://insights.sei.cmu.edu/devops/2015/03/devops-technologies-fabric-or-ansible.html">quote one DevOps professional</a>, “Ansible is generally much more powerful, since it provides much deeper and more complex semantics for modeling multi-tier infrastructure, such as those with arrays of web and database hosts.”</p>
+<p>One example of an Ansible–Django playbook can be found <a href="https://github.com/cchurch/ansible-role-django">here</a>.</p>
+<p>There are also other tools that can help us streamline our deployment. <a href="https://github.com/pydanny/cookiecutter-django">Django-Cookiecutter</a> is a package that helps us make our projects production ready. <a href="http://whitenoise.evans.io/en/stable/">WhiteNoise</a> helps with the serving of static files. And there ares <a href="https://djangopackages.org/grids/g/deployment/">many others</a>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this guide we went over the main concerns of the deployment of Django apps, but the topic we tried to cover is rather big, and so it would be impossible to cover comprehensively. From speed optimization to security hardening, there are many other topics worth exploring once you've covered the basics.</p>
+</div>
+
+
+</body>
+<script src="https://cdn.rawgit.com/alexmwalker/book-template/master/src/docs/assets/js/book.js"></script>
+<script src="../assets/js/prism.js"></script>
+
+</html>
