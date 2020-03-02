@@ -1,0 +1,280 @@
+<div class="frontmatters">
+<div class="page-frontmatter preface front set-front-matter">
+<div class="title-name">
+<h2 id="maintitle">Adding a Social Login to a Django App</h2>
+</div>
+
+<p>Copyright &copy; 2020 SitePoint Pty. Ltd.</p>
+<ul>
+<li><strong>Author:</strong> Tonino Jankov</li>
+<li><strong>Cover Design:</strong> Alex Walker</li>
+</ul>
+<h2>Notice of Rights</h2>
+<p>All rights reserved. No part of this book may be reproduced, stored in a retrieval system or transmitted in any form or by any means, without the prior written permission of the publisher, except in the case of brief quotations embodied in critical articles or reviews.</p>
+<h2>Notice of Liability</h2>
+<p>The author and publisher have made every effort to ensure the accuracy of the information herein. However, the information contained in this book is sold without warranty, either express or implied. Neither the authors and SitePoint Pty. Ltd., nor its dealers or distributors will be held liable for any damages to be caused either directly or indirectly by the instructions contained in this book, or by the software or hardware products described herein.</p>
+<h2>Trademark Notice</h2>
+<p>Rather than indicating every occurrence of a trademarked name as such, this book uses the names only in an editorial fashion and to the benefit of the trademark owner with no intention of infringement of the trademark.</p>
+
+<p><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/sitepoint-gray.svg" alt="SitePoint logo" width="160" class="lazyload" /></p>
+<p><br />Published by SitePoint Pty. Ltd.</p>
+<p>48 Cambridge Street Collingwood <br />VIC Australia 3066 <br />Web: www.sitepoint.com <br />Email: books@sitepoint.com</p>
+
+<h2>About SitePoint</h2>
+<p>SitePoint specializes in publishing fun, practical, and easy-to-understand content for web professionals. Visit <a href="https://www.sitepoint.com/">sitepoint.com</a> to access our blogs, books, newsletters, articles, and community forums. You&rsquo;ll find a stack of information on JavaScript, PHP, Ruby, mobile development, design, and more.</p>
+
+</div>
+</div>
+
+
+<!-- chapter 1 -->
+
+
+<div class="chapter" data-chapter-number="1">
+<div class="chapter-start">
+<div class="ch-head">Chapter <span class="chapter-number"> 1 </span></div>
+<h1 class="chaptertitle">Adding a Social Login to a Django App</h1>
+<h3 class="author">Tonino Jankov</h3>
+</div>
+
+<p>Ever since the rise of internet giants such as Google, Twitter, Facebook and others, internet users are constantly walking a thin line between the dangers of infringements on their privacy and the huge conveniences these services provide.</p>
+<p>The observation that users of the new media are the actual commodity goes back as far as 1973, when a little-known video titled <em>Television Delivers People</em> first said:</p>
+<blockquote>
+<p>You are delivered to the advertiser, who is the customer. &hellip; You are the end product.</p>
+</blockquote>
+<p>So, we reap enormous benefits provided to us by these giants, and in exchange, we surrender our online identities, and in many cases our privacy, to be handled, used, and often sold by online companies.</p>
+<p>One of the concessions&mdash;and benefits&mdash;that we reap is online-identity management. If we counted the percentage of the Internet&rsquo;s users that already have a Facebook, Gmail, or Twitter account, we would pretty much cover most of the online population.</p>
+<p>Almost everyone has at least one of these accounts.</p>
+<p>So when a website or an application wants to persist users that use the web app, or mobile app, they can simply leverage this fact and let users register on their website by using an account they already have.</p>
+<p>This way, the website makes sure that there&rsquo;s some identity, and an existing account behind the registration on their website.</p>
+<p>Another benefit for the website is lowering the effort needed for the visitors to register. From the user-experience perspective, having to click twice on a button requires significantly smaller effort than actually having to type in their name, email, maybe username, password, and to save all that data for future use.</p>
+<p>So, the mere UX advantage this provides is significant enough to cause many, many apps and businesses to adopt this authentication scheme into their registration, and, subsequently, authentication flow.</p>
+<p>When we add to this the fact that using social accounts often means that website owners can avail themselves of much of the other user&rsquo;s data available from the social media account&mdash;age, sex, title, full name, and so on&mdash;one can understand why using these sign-in/sign-up flows has become attractive.</p>
+<h2>OAuth</h2>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/oauth-github.png" alt="" class="lazyload" /></p>
+<p><strong>OAuth</strong> is an open standard used to enable authentication and authorization of users on different third-party websites, using an existing account they already have on another website, without them having to share their passwords with the third party.</p>
+<p>It enables any website to authorize or authenticate a user without the user having to disclose the password of their Google, Twitter or Facebook account.</p>
+<p>It is a mechanism for &ldquo;secure delegated access&rdquo;, as it&rsquo;s <a href="https://en.wikipedia.org/wiki/OAuth">described on Wikipedia</a>. With the approval of the account owner, access tokens are issued to third-party websites (by service providers with whom the user/account owner has an account) for limited access to user&rsquo;s data on a service-provider&rsquo;s server.</p>
+<p>OAuth as a protocol started off as a project by Twitter in 2006, to be joined by Google in 2007, with the first version of the protocol published as an <a href="https://tools.ietf.org/html/rfc5849">IETF Request For Comments 5849 </a> in 2010.</p>
+<p>The current version, used with all the major providers, is OAuth 2.0, as specified in <a href="https://tools.ietf.org/html/rfc6749">IETF RFC 6749</a>.</p>
+
+<h4>Internet Identity Research</h4>
+
+<p>Google has an <a href="https://sites.google.com/site/oauthgoog/Home/newhome"><em>Internet Identity Research</em> directory</a> dedicated to OAuth.</p>
+
+<h2>Adding Multiple Social Logins to a Web Application</h2>
+<p>When we add multiple OAuth providers to enable social login on our website, as is the custom, we distinguish <em>registration</em> and later <em>authentication</em> scenarios. When users register, they create an account with our website using some account data from their third-party account. We then save that user data in our database, so that on the subsequent logins we can check whether user has signed up before, and we can save some new user data, like results of some user&rsquo;s activities, custom settings, and so on.</p>
+<p>So, new sign-ups will create new <em>accounts</em> with existing social media account data, and for further sign-ins, users can use the same or other social media accounts. If they use new social media account to sign in, the new provider account data should be added to the existing sign-up.</p>
+<p>This creates some complexities, because we need to maintain records of potentially multiple social accounts that point to a single user account in our web app.</p>
+<p>This likely means one-to-many foreign key relationships on a database level, where OAuth account data by multiple providers is added as separate database records, referring to the single user account as a foreign key.</p>
+<p>There&rsquo;s also an added complexity of a single source of uniqueness for the user account created by social sign-up. Will it be name, email or, for example, a user&rsquo;s Twitter handle? What if the OAuth provider doesn&rsquo;t provide access to the user&rsquo;s email? Then, as a unique parameter to unite multiple social media accounts, we would need to ask the user to manually enter their email address, which kind of defeats the purpose, at least from the UX aspect.</p>
+<p>The thing to emphasize is that the level of complexity involved means that the functionality deserves its own Python module or library.</p>
+
+<h2>django-allauth</h2>
+<p><code>django-allauth</code> is, <a href="https://www.intenct.nl/projects/django-allauth/">to quote the website</a>, &ldquo;a reusable Django app that allows for both local and social authentication&rdquo;. Some of the OAuth providers it supports include Amazon, Bitly, Dropbox, Facebook, Feedly, GitHub, Google, Instagram, LinkedIn, PayPal, SoundCloud, Stack Exchange, Twitter, and VK. We can say that the app is a standard when it comes to social authentication for Django.</p>
+<p>The application supports multiple schemes for authentication and account verification, including email verification. The sign-up form allows for asking additional questions. The app provides for connecting multiple social media accounts to the Django user account. It actually provides a set of Django apps with models that together make a social authentication solution.</p>
+
+<h2>Installation</h2>
+<p>To install <code>django-allauth</code> , we&rsquo;ll first run the obvious <code>pip install django-allauth</code> in our environment. This will make the app available to our Django project.</p>
+<p>Then we&rsquo;ll open our <code>settings.py</code> and make sure that our <code>INSTALLED_APPS</code> block contains this line:</p>
+
+<pre><code class="lang-python">'django.contrib.sites',
+</code></pre>
+
+<p>Then we&rsquo;ll also add <code>allauth</code>-related lines to the same block:</p>
+
+<pre><code class="lang-python">'allauth',
+'allauth.account',
+'allauth.socialaccount',
+'allauth.socialaccount.providers.twitter',
+'allauth.socialaccount.providers.facebook',
+'allauth.socialaccount.providers.google',
+</code></pre>
+
+<p>We&rsquo;ll also add an <code>AUTHENTICATION_BACKENDS</code> block to our <code>settings.py</code> :</p>
+
+<pre><code class="lang-python">AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+</code></pre>
+
+<p>The authentication back end in Django is a class that implements two required methods&mdash; <code>get_user()</code> and <code>authenticate()</code> &mdash;and provides logic to authenticate users against.</p>
+<p>The <code>AUTHENTICATION_BACKENDS</code> setting is basically a Python tuple containing all the classes used by Django to authenticate users against.</p>
+<p>The first line in our tuple, with the <code>ModelBackend</code> class, is the default back end. We added <code>allauth</code> &rsquo;s <code>AuthenticationBackend</code> class as the second back end, because the order of classes in this setting matters: Django will try to authenticate users against the back end specified in this particular order.</p>
+<p>So, the classes specified first have precedence over the later ones. In our project, this means that (super)users will be able to log in to the Django admin, by their username, regardless of the <code>allauth</code> system.</p>
+<p>We&rsquo;ll also add something like this to the settings file:</p>
+
+<pre><code class="lang-python">SITE_ID = 1
+</code></pre>
+
+<p>This is for the site&rsquo;s framework.</p>
+<p>The next thing to do is to add this line to our <code>urlpatterns</code> list in the main <code>urls.py</code> file:</p>
+
+<pre><code class="lang-python">url(r'^accounts/', include('allauth.urls')),
+</code></pre>
+
+<p>Now, presuming that we&rsquo;ve enabled the Django admin pages, our <code>urls.py</code> will look something like this:</p>
+
+<pre><code class="lang-python">from django.contrib import admin
+from django.urls import path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+]
+</code></pre>
+
+<p>After we add the above line to <code>urlpatterns</code> , we&rsquo;ll see Django complaining that we don&rsquo;t have the <code>url()</code> function in our current scope, which means we&rsquo;ll need to add this to the top or our <code>urls</code> file:</p>
+
+<pre><code class="lang-python">from django.conf.urls import url
+</code></pre>
+
+<p>We&rsquo;ll add <code>include</code> to our imports from Django <code>urls</code> , which means that our file&rsquo;ll look something like this (unless we&rsquo;ve added other URL patterns before and we&rsquo;re adding <code>allauth</code> to a project that&rsquo;s been already worked on):</p>
+
+<pre><code class="lang-python">from django.contrib import admin
+
+# we added 'include' here
+from django.urls import path, include
+
+# we added url import
+from django.conf.urls import url
+
+urlpatterns = [
+    # we added this url pattern, with all the allauth sub-urls
+    url(r'^accounts/', include('allauth.urls')),
+    path('admin/', admin.site.urls),
+]
+</code></pre>
+
+<p>With this done, we&rsquo;ll run migrations in the root of our project:</p>
+
+<pre><code class="lang-python">python manage.py migrate
+</code></pre>
+
+<p>When the migrations finish running, our website&rsquo;ll be ready to use <code>allauth</code> .</p>
+<p>From the <code>showmigrations</code> command we see that migrations for <code>account</code> and <code>socialaccount</code> apps were run, and if we dig a bit through the <a href="https://github.com/pennersr/django-allauth/blob/master/allauth/"></a> <code>allauth</code> <a href="https://github.com/pennersr/django-allauth/blob/master/allauth/">GitHub repo</a>, we&rsquo;ll see the corresponding apps and migrations within each of them.</p>
+<p>We&rsquo;ll see that the <code>socialaccount</code> initial migration created a database table with the same name, which has a foreign key column connection to the users table, and that it also has an <code>extra_data</code> JSONField to save any extra data for the account.</p>
+<p>We can see the new models in the Django admin as well:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/django-admin.png" alt="" class="lazyload" /></p>
+<p>After we set this all up, we&rsquo;ll just need to access the admin pages (provided that our server is running&mdash;either locally or live), create a <code>Site</code> for our domain, and add a <code>Social App</code> for the three big providers we chose&mdash;Facebook, Twitter and Google.</p>
+<p>Up until this point, we&rsquo;ve been working with Django&rsquo;s default development server running on <code>http://localhost:8000</code> , and we could get by with that. But with an OAuth setup and outside providers, that may not always work, because they may not work, or allow that type of addresses, and could require a real URL and domain name.</p>
+<p>In addition, these third-party providers may insist on SSL connections, so this is something to look out for.</p>
+<p>This is where we may need to switch to working with a real server and domain.</p>
+<p>For our current setup, only Twitter requires a real domain to be used, so we won&rsquo;t be able to use localhost. Facebook requires HTTPS, and we&rsquo;ll need certificates if we use a real domain.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/adding-apps-admin.png" alt="" class="lazyload" /></p>
+<p>This part presumes that we have already configured our Django installation so that we can access Django&rsquo;s admin pages, and that we created at least one superuser with <code>python manage.py createsuperuser</code> .</p>
+<p>To create these Social Apps in the Django admin, we&rsquo;ll first need to visit the pages of each provider and create the app for our authorization.</p>
+<p>For Facebook, that will be <a href="https://developers.facebook.com/">developers.facebook.com</a>, where we can create new apps.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/fb-create-new-app.png" alt="" class="lazyload" /></p>
+<p>Once we create the app, we&rsquo;ll go to its settings to get the app ID and secret needed to set up the app in our Django back end.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/fb-oauth-id.png" alt="" class="lazyload" /></p>
+<p>With Twitter the procedure is similar, although Twitter has added some scrutiny to the app-creation process, which may at times require manual approval by the Twitter staff after answering some questions.</p>
+<p>To create a new app, we&rsquo;ll visit <code>https://developer.twitter.com/en/apps</code> , and Twitter may present us with some questions related to opening the developer account. After that, we&rsquo;ll be able to create an app that will consume the Twitter API, or, in our case, enable us to authenticate users against their Twitter accounts.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/tw-create-new-app.png" alt="" class="lazyload" /></p>
+<p>After we fill that form according to the instructions, and create the app, we&rsquo;ll be able to copy the API key and API secret key, and we&rsquo;ll enter it into our <code>social app</code> creation form&mdash;for Twitter&mdash;in the Django admin.</p>
+<p>After we save that, we&rsquo;ll create the same thing for Google&mdash;an application with its client ID and secret that we&rsquo;ll use in the creation of the Google social app.</p>
+<p>First we&rsquo;ll create a new project on <code>https://console.developers.google.com/project</code> , and then we&rsquo;ll choose the selected project and go to its <strong>APIs &amp; Services</strong> link in the left menu and select the OAuth consent screen, where we&rsquo;ll provide some basic information for the web interface for the authentication.</p>
+<p>Then we&rsquo;ll be able to go to <strong>Credentials</strong> and create new client ID.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/google-oauth-client-id.png" alt="" class="lazyload" /></p>
+<p>Once we create it, providing URLs that are needed, we&rsquo;ll copy the client ID and secret to add them to our social app&rsquo;s Django record for Google.</p>
+<p>As we finish this, we&rsquo;ll have all that we need to test the authentication with these three providers.</p>
+
+
+<h2>Testing Our Installation</h2>
+<p>If we now go to <code>http://localhost:8000/accounts/login</code>, or the real URL we may be using, we should see the following screen:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/allauth-install-testing.png" alt="" class="lazyload" /></p>
+<p>This will indicate that we successfully activated <code>django-allauth</code> , but we still need to test its functionality.</p>
+<p>We clicked the Google link, and we were taken to the following sign-in/sign-up screen:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/google-sign-in.png" alt="" class="lazyload" /></p>
+<p>So far, so good. Once we clicked the link to authorize our website, we were redirected to <code>http://localhost:8000/accounts/profile/#</code>(we&rsquo;ve used the <code>sitepoint-oauth-test.com</code> domain that we set up in our hosts file so that it redirects to our development server locally) and we&rsquo;ll see Django&rsquo;s 404 page:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/django-404-profile.png" alt="" class="lazyload" /></p>
+<p>This is because the profile pages haven&rsquo;t been implemented yet. It may look unusual to some users, but <code>allauth</code> owners believe that a profile page <a href="https://github.com/pennersr/django-allauth/issues/407">would go beyond the scope</a> of the project. If we want to set these up, we can create our custom views and templates and hook them up with a urlpattern and create nice profile pages for our users.</p>
+<p>That is beyond the scope of this guide as well, but we&rsquo;ll make sure that users get redirected to meaningful pages upon login, and that they can manage their accounts.</p>
+<p>One more thing we&rsquo;ll notice is that, if the user who signed up or signed in using these three providers isn&rsquo;t a superuser and tries to access the Django administration pages (any of the URLs under the root <code>/admin/</code> path), they&rsquo;ll be denied access, which means that Django successfully distinguishes between these two types of users, and that controlling access for the guest visitors and logged-in users via these three external providers will be flexible, and left to the developer.</p>
+<p>The setting that determines the URL to which users are redirected upon login is <code>LOGIN_REDIRECT_URL</code> , so we&rsquo;ll add the following line to our <code>settings.py</code> file:</p>
+
+<pre><code class="lang-python">LOGIN_REDIRECT_URL = '/accounts/social/connections/'
+</code></pre>
+
+<p>By redirecting the user to this URL, they&rsquo;ll get to the page with an overview of their social media connections/accounts, and they&rsquo;ll be able to remove these accounts.</p>
+<p>In addition, they&rsquo;ll be able to add a unique email to their account, which will serve as a unique identifier in cases when we have multiple social media accounts connected to the user&rsquo;s account.</p>
+<p>That is one more thing that a user will be able to do on the landing page after their sign-in or sign-up: add more social media accounts.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/social-connections.png" alt="" class="lazyload" /></p>
+<p>If we now try to click the <strong>Remove</strong> button to remove the only social connection we have, <code>django-allauth</code> will complain that we don&rsquo;t yet have a password set up, so we can&rsquo;t remove the connection.</p>
+<p>So, by default, we&rsquo;ll need to add email and password&mdash;and confirm the email&mdash;to be able to disconnect the third-party account from our Django user account.</p>
+<p>We can do that by following the <strong>Change Email</strong> link, which will take us to the following screen:</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/add-email.png" alt="" class="lazyload" /></p>
+<p>On that page, we&rsquo;ll enter our email and password, and create an account that will exist independently of the OAuth provider.</p>
+
+<h3>Deauthorizing the App at the Third-party Provider</h3>
+<p>If the user deauthorizes the application at the third-party provider website, <code>django-allauth</code> will try to make the effects of that as elegant and seamless as possible. This means that, if user is logged out and tries to log back in with, say, Google, they&rsquo;ll be redirected to Google&rsquo;s authorization screen to authorize the app again&mdash;and this will alter their account data saved at our app.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/deauthorize.png" alt="" class="lazyload" /></p>
+<p>If the user stays logged in, none of the saved data will change for the length of the session.</p>
+<p>By default, the only data getting saved in our database is the access token, but if our web app needs to fetch any new data from the third-party OAuth provider, it won&rsquo;t be able to do that in case that authorization was withdrawn.</p>
+<p class="f-center"><img data-src="https://learnable-static.s3.amazonaws.com/premium/reeedr/books/adding-a-social-login-to-a-django-app/images/deauthorize-callback.png" alt="" class="lazyload" /></p>
+<p>But here&rsquo;s the caveat: our application won&rsquo;t, by default, remove the account or data from the account that was deauthorized. We&rsquo;ll need to implement this, and this is why we can see providers like Facebook giving us the option to save the URL that will be notified when a user deauthorizes our app.</p>
+<p>Unless we implement the mechanism to remove the old data, our new authorizations will simply create new database records.</p>
+
+<h2>Advanced: Modifying allauth Behavior to Achieve Custom Effects</h2>
+<p>Our current setup doesn&rsquo;t set up much of the user&rsquo;s data with the creation of the account, which is something we can override. <a href="https://django-allauth.readthedocs.io/en/latest/advanced.html#creating-and-populating-user-instances">This link</a> in the <code>django-allauth</code>documentation details the adapter methods we can use to modify creation and population of user instances.</p>
+<p>For example, we can use the <code>populate_user(self, request, sociallogin, form=None)</code> hook in the <code>allauth.socialaccount.adapter.DefaultSocialAccountAdapter</code> to populate the user instance ( <code>sociallogin.account.user</code> ) with any data we want. The <code>data</code> argument here is really a dictionary of user data returned by the third-party OAuth providers (Google, Facebook and Twitter in our case), which we can then use to change what is saved and how.</p>
+
+<h3>Signals</h3>
+<p>Django includes a signals system that enables us to &ldquo;emit&rdquo; or dispatch signals at various stages of our app execution, which can then be &ldquo;received&rdquo; by a listener function, defined by us, which can execute custom functionality at that point in the request life cycle.</p>
+<p>Fully explaining the topic of signals in Django goes beyond the scope of this tutorial, and readers can find more <a href="https://docs.djangoproject.com/en/2.2/topics/signals/">in the Django docs</a>. But we&rsquo;ll provide a quick example of how we can hook into the authentication life cycle and execute custom actions at a certain point.</p>
+<p>In the particular application root directory of our Django project, we would add (if it&rsquo;s not already there) a file named <code>apps.py</code>, and add the following lines:</p>
+
+<pre><code class="lang-python">from django.apps import AppConfig
+
+class AppConfig(AppConfig):
+    name = 'app'
+    def ready(self):
+        from . import signals
+</code></pre>
+
+<p>This tells our Django app to load the <code>signals.py</code> file from its root directory.</p>
+<p>We would then add the <code>signals.py</code> file to the same application root directory (this is different from the project root directory, where the <code>manage.py</code> file resides), where we would add the following lines:</p>
+
+<pre><code class="lang-python">from django.db import models
+from django.contrib.auth.models import User
+from allauth.account.signals import email_confirmed
+from django.dispatch import receiver, Signal
+
+from .models import UserAccount
+
+@receiver(email_confirmed)
+def createUA(request, email_address, **kwargs):
+      user = User.objects.get(email=email_address.email)
+      UA = UserAccount.objects.create(user=user)
+</code></pre>
+
+<p>In this example, we use the <code>email_confirmed</code> signal to create a custom <code>UserAccount</code> object when the user actually confirms their email address by clicking the link they received in the email sent to them on registration.</p>
+<p>This is a custom database model, which would need to be created first, and we could populate it with different data on user registration, and then use this to show, for example, the user a custom profile page that we saw was missing.</p>
+<p>All the different signals we can plug into to extend <code>django-allauth</code> authentication and registration requests can be found <a href="https://django-allauth.readthedocs.io/en/latest/signals.html">here</a>.</p>
+
+<h2>Using the Authentication System</h2>
+<p>If we now want to use the authentication system we just implemented, we&rsquo;ll use the <a href="https://docs.djangoproject.com/en/2.2/topics/auth/default/">standard Django authentication and authorization system</a>, and we recommend the reader to go through the extensive Django documentation here.</p>
+<p>A quick and easy summary of one thing that will cover a big number of use cases is the <code>login_required</code> decorator, which we&rsquo;ll prepend to all our <code>views</code> function definitions to restrict access to signed-in users:</p>
+
+<pre><code class="lang-python">from django.contrib.auth.decorators import login_required
+
+@login_required
+def my_view(request):
+# ...view definition
+</code></pre>
+
+<p>One more thing that <code>django-allauth</code> provides here is the <code>verified_email_required</code> decorator, which we would use in our views in the following manner:</p>
+
+<pre><code class="lang-python">from allauth.account.decorators import verified_email_required
+
+@verified_email_required
+def verified_users_only_view(request):
+</code></pre>
+
+<p>This will restrict access to the view or page specified to users who verified their emails.</p>
+
+<h2>Summary</h2>
+<p>In this guide, we presented one of the most widely used and comprehensive Django frameworks for registration and authentication of users. It&rsquo;s by no means a complete guide to all we can do with it. We recommend you go through the <a href="https://django-allauth.readthedocs.io/">official documentation</a> for more.</p>
+<p>If you&rsquo;d like to check out another social authorization framework to use with Django, have a look at Python Social Auth and its <a href="https://github.com/python-social-auth/social-app-django">Django application</a>.</p>
+
+</div>
